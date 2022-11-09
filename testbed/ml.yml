@@ -12,6 +12,7 @@ services:
       - CONTRACT=$CONTRACT
       - SCORING=$SCORING
       - MINERS=$MINERS
+      - DATASET=$DATASET
     volumes:
       # Use the following volume for a public validation dataset:
       - './datasets/$DATASET/5:/root/dataset'
@@ -31,6 +32,7 @@ services:
       - CONTRACT=$CONTRACT
       - SCORING=$SCORING
       - MINERS=$MINERS
+      - DATASET=$DATASET
     volumes:
       - './datasets/$DATASET/$CLIENTS:/root/dataset'
       - ../build/contracts/$ABI.json:/root/abi.json

@@ -2,7 +2,15 @@
 
 ## Other prerequisites
 
-When re-starting the initiation, just run: `docker stop $(docker ps --filter status=running -q) && docker rm $(docker ps --filter status=exited -q)` (careful, it will remove ALL containers AND images).
+When re-starting the initiation, just run: `
+```sh
+docker stop $(docker ps --filter status=running -q)
+docker rm $(docker ps --filter status=exited -q)
+docker system prune -a
+``` 
+
+
+(careful, it will remove ALL containers AND images).
 
 ```sh
 sudo apt-get update && sudo apt-get -y upgrade
@@ -116,6 +124,9 @@ The contract deployment script fetches the account to use from `ethereum/datadir
 ```bash
 python3 toolkit.py deploy-contract
 ```
+### Datasets
+
+Need to be placed under `testbed/datasets/$DATASET/` folders `1`, `5`, `25` represent the number of "local" datasets belonging to the individual trainers. These should be disjoint for best results. Data should be in `.npz` format in `csv`, with `x` and `y` as headers.
 
 ### Launch ML Containers
 
