@@ -44,7 +44,7 @@ def batch_data(data_shard, bs=32):
                                                     random_state=42)
     train_dataset = tf.data.Dataset.from_tensor_slices((list(X_data_train), list(y_data_train)))
     test_dataset = tf.data.Dataset.from_tensor_slices((list(X_data_test), list(y_data_test)))
-    return (train_dataset.shuffle(len(y_data_train)).batch(bs), test_dataset.batch(bs), y_data_test)
+    return (train_dataset.shuffle(len(y_data_train)).batch(bs), test_dataset.batch(bs))
 
 def create_clients(image_list, label_list, num_clients=5):
     ''' return: a dictionary with keys clients' names and value as 
@@ -96,8 +96,19 @@ if __name__ == "__main__":
 
     #process and batch the training data for each client
     clients_batched = dict()
+
+    path_template = "../datasets/mnist/{}/{}/{}.tfrecord"
+    
     for (client_name, data) in clients.items():
-        clients_batched[client_name] = batch_data(data)
-        
-    #process and batch the test set  
-    test_batched = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(len(y_test))
+        train_ds, test_ds = batch_data(data)
+        tf.data.experimental.save(train_ds, path_template.format(NO_TRAINERS, 'train', client_name))
+        tf.data.experimental.save(test_ds, path_template.format(NO_TRAINERS, 'test', client_name))
+
+    # train_ds = tf.data.experimental.load(path_template.format(NO_TRAINERS, 'train', '1'))
+    # print(train_ds)
+
+
+
+  
+
+
