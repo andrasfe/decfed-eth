@@ -55,7 +55,7 @@ This directory contains all the necessary code to run experiments using the [`bl
 
 ## Setup
 
-Install python packages: `python3 setup.py install`
+Install python packages: `python3 setup.py develop` (important, so that you can debug)
 
 ### Generate Ethereum Accounts
 
@@ -133,7 +133,7 @@ This will populate the client and owner datasets.
 
 ### Generate .h5 file for Model
 
-Run `python3 model_persister.py` to generate the model, then load it to IPFS.
+Run `python3 model_persister.py` to generate the model and weights in `testbed/datasets`.
 
 ### Launch ML Containers
 
@@ -185,11 +185,23 @@ Some *required* base information for the contract can be found in [../contracts.
 
 ## IPFS
 
+First, install on your desktop:
+```sh
+wget https://dist.ipfs.io/go-ipfs/v0.12.2/go-ipfs_v0.12.2_linux-amd64.tar.gz && \
+  tar -xvzf go-ipfs_v0.12.2_linux-amd64.tar.gz && \
+  cd go-ipfs && \
+  sudo bash install.sh && \
+  ipfs --version
+```
+
+Run this in the home directory: `ipfs init`
+
 To add any file to IPFS, run:
 
 ```
 ipfs add [-r] path
 ```
+example: `ipfs add ./datasets/model.h5` and `ipfs add ./datasets/weights.h5`.
 
 ## How to Run Different Experiments
 
