@@ -12,7 +12,7 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cid", "QmXwBHdQjaJb7V98f9MC383QP73rXLDreeypPhveKHFEDJ"]
+            "args": ["--cid", "QmfF98dVFYnMbpY2QVWBBQVA1oAmSoHz2riqaUTPkJZvP7"]
         }
     ]
 }

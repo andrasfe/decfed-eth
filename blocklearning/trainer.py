@@ -1,6 +1,7 @@
 import json
 import time
 from .utilities import float_to_int
+from tensorflow.keras.optimizers import SGD
 
 class Trainer():
   def __init__(self, contract, weights_loader, model, data, logger = None, priv = None):
@@ -8,7 +9,7 @@ class Trainer():
     self.priv = priv
     self.weights_loader = weights_loader
     self.contract = contract
-    (self.x_train, self.y_train, self.x_test, self.y_test) = data
+    self.train_ds_batched = data
     self.model = model
     self.__register()
 
@@ -22,16 +23,30 @@ class Trainer():
       weights = self.weights_loader.load(weights_id)
       self.model.set_weights(weights)
 
+      lr = 0.01 
+      local_rounds = 5
+      comms_round = 5
+      loss='categorical_crossentropy'
+      metrics = ['accuracy']
+      optimizer = SGD(lr=lr, 
+                      decay=lr / comms_round, 
+                      momentum=0.9
+                    )          
+
+      self.model.compile(loss=loss, 
+            optimizer=optimizer, 
+            metrics=metrics)
+
     if self.logger is not None:
       self.logger.info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
 
-    history = self.model.train(self.x_train, self.y_train, self.x_test, self.y_test)
+    history = self.model.fit(self.train_ds_batched, epochs=local_rounds, verbose=True)
 
     if self.logger is not None:
       self.logger.info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
 
-    trainingAccuracy = float_to_int(history['sparse_categorical_accuracy'][0])
-    validationAccuracy = float_to_int(history['val_sparse_categorical_accuracy'][0])
+    trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
+    validationAccuracy = float_to_int(history.history["accuracy"][-1]*100)
 
     weights = self.model.get_weights()
     if self.priv is not None:
@@ -42,7 +57,7 @@ class Trainer():
     submission = {
       'trainingAccuracy': trainingAccuracy,
       'testingAccuracy': validationAccuracy,
-      'trainingDataPoints': len(self.x_train),
+      'trainingDataPoints': self.train_ds_batched.cardinality().numpy(),
       'weights': weights_id
     }
     self.contract.submit_submission(submission)
