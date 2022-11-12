@@ -1,12 +1,11 @@
 import numpy as np
 import cv2
 import os
-import random
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import tensorflow as tf
 from imutils import paths
+import click
 
 def load(paths, verbose=-1):
     '''expects images for each class in seperate dir, 
@@ -78,10 +77,12 @@ def create_clients(image_list, label_list, num_clients=5):
 
     return {client_names[i] : shards[i] for i in range(len(client_names))} 
 
-if __name__ == "__main__":
-    NO_TRAINERS = 5
-
-    img_path = '../datasets/trainingSet'
+@click.command()
+@click.option('--no_trainers', default='5', help='number of clients')
+@click.option('--data_path', default='./datasets', help='location of training data')
+@click.option('--img_path', default='./datasets/trainingSet', help='location of images')
+def main(no_trainers, data_path, img_path):
+    no_trainers = int(no_trainers)
     image_paths = list(paths.list_images(img_path))
 
     image_list, label_list = load(image_paths, verbose=10000)
@@ -89,26 +90,27 @@ if __name__ == "__main__":
     lb = LabelBinarizer()
     label_list = lb.fit_transform(label_list)
 
-    X_train, X_test, y_train, y_test = train_test_split(image_list, label_list, test_size=0.1, random_state=42)   
+    X_train, X_test, y_train, y_test = train_test_split(image_list, label_list, test_size=0.2, random_state=42)   
     print(len(X_train), len(X_test), len(y_train), len(y_test)) 
 
-    clients = create_clients(X_train, y_train, num_clients=NO_TRAINERS)
+    # create one extra for the owner data set
+    participants = create_clients(X_train, y_train, num_clients=(no_trainers + 1))
 
-    #process and batch the training data for each client
-    clients_batched = dict()
-
-    path_template = "../datasets/mnist/{}/{}/{}.tfrecord"
+    path_template = "{}/mnist/{}/{}/{}.tfrecord"
     
-    for (client_name, data) in clients.items():
+    owner = list(participants.keys())[-1]
+
+    for (client_name, data) in participants.items():
         train_ds, test_ds = batch_data(data)
-        tf.data.experimental.save(train_ds, path_template.format(NO_TRAINERS, 'train', client_name))
-        tf.data.experimental.save(test_ds, path_template.format(NO_TRAINERS, 'test', client_name))
+        if client_name != owner:
+            tf.data.experimental.save(train_ds, path_template.format(data_path, no_trainers, 'train', client_name))
+            tf.data.experimental.save(test_ds, path_template.format(data_path, no_trainers, 'test', client_name))
+        else:
+            tf.data.experimental.save(test_ds, "{}/mnist/{}/owner_val.tfrecord".format(data_path, no_trainers))
 
     # train_ds = tf.data.experimental.load(path_template.format(NO_TRAINERS, 'train', '1'))
     # print(train_ds)
 
+   
 
-
-  
-
-
+main()

@@ -55,6 +55,8 @@ This directory contains all the necessary code to run experiments using the [`bl
 
 ## Setup
 
+Install python packages: `python3 setup.py install`
+
 ### Generate Ethereum Accounts
 
 Generate the accounts that will be used on the network. To generate 5 accounts for miners (or validators) and 10 for trainers, run:
@@ -126,7 +128,12 @@ python3 toolkit.py deploy-contract
 ```
 ### Datasets
 
-Need to be placed under `testbed/datasets/$DATASET/` folders `1`, `5`, `25` represent the number of "local" datasets belonging to the individual trainers. These should be disjoint for best results. Data should be in `.npz` format in `csv`, with `x` and `y` as headers.
+File `trainingSet.tar` needs to be placed under `testbed/datasets/$DATASET/`, then expanded. Then run `python3 data_loader.py`.
+This will populate the client and owner datasets.
+
+### Generate .h5 file for Model
+
+Run `python3 model_persister.py` to generate the model, then load it to IPFS.
 
 ### Launch ML Containers
 

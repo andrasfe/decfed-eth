@@ -19,7 +19,7 @@ python run_client.py \
   --passphrase $PASSWORD \
   --contract $CONTRACT \
   --log /root/log.log \
-  --train /root/dataset/train/$((INDEX-1)).npz \
-  --test /root/dataset/test/$((INDEX-1)).npz \
+  --train /root/dataset/train/$((INDEX-1)).tfrecord \
+  --test /root/dataset/test/$((INDEX-1)).tfrecord \
   --scoring $SCORING
 

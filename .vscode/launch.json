@@ -12,7 +12,7 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["update-genesis"]
+            // "args": ["update-genesis"]
         }
     ]
 }
