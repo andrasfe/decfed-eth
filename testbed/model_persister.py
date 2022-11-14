@@ -1,5 +1,6 @@
 from blocklearning.models import SimpleMLP
 import click
+import pickle
 
 @click.command()
 @click.option('--location', default='./datasets', help='location for model')
@@ -10,7 +11,10 @@ def main(location):
     smlp_global = SimpleMLP()
     global_model = smlp_global.build(build_shape, 10) 
     global_model.save('{}/model.h5'.format(location))
-    global_model.save_weights('{}/weights.h5'.format(location))
+    with open('{}/weights.pkl'.format(location), 'wb') as fp:
+        weights = global_model.get_weights()
+        pickle.dump(weights, fp)
+
  
 main()
 

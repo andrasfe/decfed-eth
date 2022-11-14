@@ -22,15 +22,10 @@ class IpfsWeightsLoader():
         weights = pickle.load(fp)
         return weights
 
-  def store(self, weights):
-    with tempfile.TemporaryDirectory() as tempdir:
-      weights_path = os.path.join(tempdir, 'weights.pkl')
-      with open(weights_path, 'wb') as fp:
-        pickle.dump(weights, fp)
+  def store(self, weights_path):
+    if self.direct:
+      out = os.popen(f'ipfs add -q {weights_path}').read().strip().split('\n').pop()
+    else:
+      out = os.popen(f'ipfs add --api {self.ipfs_api} -q {weights_path}').read().strip().split('\n').pop()
 
-      if self.direct:
-        out = os.popen(f'ipfs add -q {weights_path}').read().strip().split('\n').pop()
-      else:
-        out = os.popen(f'ipfs add --api {self.ipfs_api} -q {weights_path}').read().strip().split('\n').pop()
-
-      return out
+    return out
