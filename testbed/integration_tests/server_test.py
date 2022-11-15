@@ -29,7 +29,7 @@ def main(ipfs_api, model_cid, weights_cid, model_path, weights_path, data_path):
         print('model cid', model_cid)
 
     if weights_cid == '':
-        weights_cid = weights_loader.store(weights_path)
+        weights_cid = weights_loader.store_from_path(weights_path)
         print('weights cid', weights_cid)
 
 
@@ -39,5 +39,18 @@ def main(ipfs_api, model_cid, weights_cid, model_path, weights_path, data_path):
     model = model_loader.load()
     aggregator = FedAvgAggregator(model.count, weights_loader)
     aggregator = Aggregator(contract, weights_loader, model, aggregator, with_scores=False, logger=None)
+
+    submission = {
+        'trainingAccuracy': 99933034181594841088, 
+        'testingAccuracy': 99933034181594841088, 
+        'trainingDataPoints': 140, 
+        'weights': weights_cid
+    }
+
+    submissions = [submission]*2
+    trainers = ['trainer']*2
+    
+    contract.get_submissions_for_aggregation.return_value = (round, trainers, submissions)
+    aggregator.aggregate()
 
 main()

@@ -11,27 +11,31 @@ from blocklearning.contract import Contract
 
 @click.command()
 @click.option('--ipfs_api', default='None', help='api uri or None')
-@click.option('--cid', default='', help='api uri or None')
+@click.option('--cid', default='QmfGcAp7mfxzrxSNNZmmtvpPAwToZ4Bbjz38v8ivKneLSb', help='api uri or None')
+@click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
 @click.option('--data_path', default='../datasets/mnist/5/train/1.tfrecord', help='location of client data (tfrecs)')
 # @patch('Contract.get_training_round')
 
-def main(ipfs_api, cid, data_path):
-    weight_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
+def main(ipfs_api, cid, weights_path, data_path):
+    weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
+
+    if cid == '':
+        cid = weights_loader.store(weights_path)
+        print('weights cid', cid)
+
+    weights = weights_loader.load(cid)
+
     build_shape = 784 #(28, 28, 3)  # 1024 <- CIFAR-10    # 784 # for MNIST
     smlp_global = SimpleMLP()
     model = smlp_global.build(build_shape, 10) 
 
-    if cid == '':
-        weights = model.get_weights()
-        cid = weight_loader.store(weights)
-        print(cid)
-    weights2 = weight_loader.load(cid)
-
-    model.set_weights(weights2)
+    model.set_weights(weights)
     contract = Mock()
     contract.get_training_round.return_value = (1, cid)
     train_ds = tf.data.experimental.load(data_path)
-    trainer = Trainer(contract=contract, weights_loader=weight_loader, model=model, data=train_ds)
+    trainer = Trainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds)
     trainer.train()
+    args = contract.submit_submission.call_args.args
+    print(args)
 
 main()
