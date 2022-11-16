@@ -9,6 +9,7 @@ import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as utilities
 import blocklearning.diffpriv as diffpriv
 from blocklearning.contract import RoundPhase
+import tensorflow as tf
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
@@ -24,10 +25,7 @@ from blocklearning.contract import RoundPhase
 def main(provider, ipfs, abi, account, passphrase, contract, log, train, test, scoring):
   log = utilities.setup_logger(log, "client")
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)
-
-  # Load Training and Testing Data
-  x_train, y_train = utilities.numpy_load(train)
-  x_test, y_test = utilities.numpy_load(test)
+  train_ds = tf.data.experimental.load(train)
 
   # Get Contract and Register as Trainer
   contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
@@ -40,8 +38,7 @@ def main(provider, ipfs, abi, account, passphrase, contract, log, train, test, s
   priv = None
   # priv = diffpriv.Gaussian(epsilon=l5, sensitivity=1e-1/3)
   # priv = diffpriv.Gaussian(epsilon=1, sensitivity=1e-1/2)
-
-  trainer = blocklearning.Trainer(contract, weights_loader, model, (x_train, y_train, x_test, y_test), logger=log, priv=priv)
+  trainer = blocklearning.Trainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds, logger=log, priv=priv)
 
   # Setup the scorer for the clients. Only Marginal Gain and BlockFlow run on the client
   # device and use the client's testing dataset as the validation dataset for the scores.

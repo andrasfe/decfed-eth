@@ -49,8 +49,10 @@ def main(ipfs_api, model_cid, weights_cid, model_path, weights_path, data_path):
 
     submissions = [submission]*2
     trainers = ['trainer']*2
-    
+
     contract.get_submissions_for_aggregation.return_value = (round, trainers, submissions)
     aggregator.aggregate()
+    new_weights_cid = contract.submit_aggregation.call_args.args
+    print('new global weights cid', new_weights_cid)
 
 main()
