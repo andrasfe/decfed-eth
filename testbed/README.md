@@ -4,8 +4,8 @@
 
 When re-starting the initiation, just run: `
 ```sh
-docker stop $(docker ps --filter status=running -q)
-docker rm $(docker ps --filter status=exited -q)
+docker stop $(docker ps --filter status=running -q) && \
+docker rm $(docker ps --filter status=exited -q) && \
 docker system prune -a
 ``` 
 
@@ -139,7 +139,7 @@ Run `python3 model_persister.py` to generate the model and weights in `testbed/d
 
 ```bash
 CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-DATASET=mnist MINERS=10 SERVERS=10 CLIENTS=25   SCORING="none" \
+DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5   SCORING="none" \
 ABI=NoScore   docker-compose -f ml.yml -p bfl-ml up
 ```
 
@@ -211,7 +211,7 @@ example: `ipfs add ./datasets/model.h5` and `ipfs add ./datasets/weights.h5`.
 CONSENSUS=poa|pow|qbft MINERS=10 docker compose -f blockchain.yml -p bfl up
 
 CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-  DATASET=mnist MINERS=10 SERVERS=10 CLIENTS=25 \
+  DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5 \
   SCORING="none" ABI=NoScore \
   docker compose -f ml.yml -p bfl-ml up
 
@@ -283,4 +283,21 @@ CONTRACT=0x4A59e668c68c7915bCdfD5530B7C1C3D0F83885f \
 python3 start_vertical_round.py \
   --contract 0x4A59e668c68c7915bCdfD5530B7C1C3D0F83885f \
   --rounds 50
+```
+
+## Debugging
+
+Launch the test images. These will stay alive until you kill all 6 of them. Good for validating scripts:
+
+```bash
+CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
+DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5   SCORING="none" \
+ABI=NoScore   docker-compose -f ml-test.yml -p bfl-ml up
+```
+
+
+Run a shell in selected image, as follows:
+
+```sh
+docker exec -it <image-name> /bin/sh
 ```

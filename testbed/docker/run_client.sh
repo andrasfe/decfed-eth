@@ -9,7 +9,7 @@ PRVINDEX=$((INDEX % MINERS))
 if [ "$PRVINDEX" -eq "0" ]; then
   PRVINDEX=$MINERS
 fi
-PROVIDER=$(dig bfl-geth-miner-$PRVINDEX +short)
+PROVIDER=$(dig bfl_geth-miner_$PRVINDEX +short)
 
 python run_client.py \
   --provider "http://$PROVIDER:8545" \

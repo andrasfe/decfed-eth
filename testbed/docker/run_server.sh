@@ -9,8 +9,7 @@ PRVINDEX=$((INDEX % MINERS))
 if [ "$PRVINDEX" -eq "0" ]; then
   PRVINDEX=$MINERS
 fi
-PROVIDER=$(dig bfl-geth-miner-$PRVINDEX +short)
-# PROVIDER=$(docker container inspect -f '{{ .NetworkSettings.Networks.bflnet.IPAddress }}' bfl_geth-miner_$PRVINDEX)
+PROVIDER=$(dig bfl_geth-miner_$PRVINDEX +short)
 
 python run_server.py \
   --provider "http://$PROVIDER:8545" \
