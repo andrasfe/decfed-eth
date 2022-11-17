@@ -57,7 +57,7 @@ def create_clients(image_list, label_list, num_clients=5):
     '''
 
     #create a list of client names
-    client_names = ['{}'.format(i+1) for i in range(num_clients)]
+    client_names = ['{}'.format(i) for i in range(num_clients)]
 
     #randomize the data
     # data = list(zip(image_list, label_list))
