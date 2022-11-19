@@ -10,7 +10,7 @@ if [ "$PRVINDEX" -eq "0" ]; then
   PRVINDEX=$MINERS
 fi
 PROVIDER=$(dig bfl_geth-miner_$PRVINDEX +short)
-
+nohup bash -c "ipfs daemon &" && sleep 15
 python run_client.py \
   --provider "http://$PROVIDER:8545" \
   --abi /root/abi.json \

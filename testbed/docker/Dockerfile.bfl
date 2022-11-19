@@ -10,7 +10,9 @@ RUN wget https://dist.ipfs.io/go-ipfs/v0.12.2/go-ipfs_v0.12.2_linux-amd64.tar.gz
   tar -xvzf go-ipfs_v0.12.2_linux-amd64.tar.gz && \
   cd go-ipfs && \
   bash install.sh && \
-  ipfs --version
+  ipfs --version && \
+  ipfs init
+# CMD sh -c "sh ipfs daemon"
 
 RUN mkdir -p /root/dataset
 

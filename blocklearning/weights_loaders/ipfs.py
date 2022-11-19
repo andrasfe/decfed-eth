@@ -4,7 +4,7 @@ import pickle
 
 class IpfsWeightsLoader():
   def __init__(self, ipfs_api='/ip4/127.0.0.1/tcp/5001'):
-    self.direct = (ipfs_api == 'None')
+    self.direct = (ipfs_api == None)
 
     if not self.direct:
       self.ipfs_api = ipfs_api

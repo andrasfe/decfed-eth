@@ -10,11 +10,10 @@ from blocklearning.contract import Contract
 
 
 @click.command()
-@click.option('--ipfs_api', default='None', help='api uri or None')
+@click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='QmfGcAp7mfxzrxSNNZmmtvpPAwToZ4Bbjz38v8ivKneLSb', help='api uri or None')
 @click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
 @click.option('--data_path', default='../datasets/mnist/5/train/1.tfrecord', help='location of client data (tfrecs)')
-# @patch('Contract.get_training_round')
 
 def main(ipfs_api, cid, weights_path, data_path):
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)

@@ -114,7 +114,7 @@ Where `CONSENSUS` = `poa|qbft|pow`.
 Unfortunately, peer discovery [doesn't work with private networks](https://ethereum.stackexchange.com/questions/121380/private-network-nodes-cant-find-peers). Not even if we use a bootstrap node. Thus, we need to connect the peers to each other manually.
 
 ```bash
-python3 toolkit.py connect-peers <network>
+python3 toolkit.py connect-peers bflnet
 ```
 
 Where `<network>` is the ID of the Docker network where the containers are running. You can check that by running `docker network ls` and looking for `bflnet` or `priv-eth-net`. If no network is passed, the script will try to infer the correct network.
@@ -126,6 +126,9 @@ The contract deployment script fetches the account to use from `ethereum/datadir
 ```bash
 python3 toolkit.py deploy-contract
 ```
+
+copy the contract address. E.g., for NoScore. You will need it when you launch the ML containers (below)
+
 ### Datasets
 
 File `trainingSet.tar` needs to be placed under `testbed/datasets/$DATASET/`, then expanded. Then run `python3 data_loader.py`.
@@ -138,7 +141,7 @@ Run `python3 model_persister.py` to generate the model and weights in `testbed/d
 ### Launch ML Containers
 
 ```bash
-CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
+CONTRACT=0x2B8d5C0B445aF5C0059766512bd33E71f0073af0 \
 DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5   SCORING="none" \
 ABI=NoScore   docker-compose -f ml.yml -p bfl-ml up
 ```
@@ -290,14 +293,14 @@ python3 start_vertical_round.py \
 Launch the test images. These will stay alive until you kill all 6 of them. Good for validating scripts:
 
 ```bash
-CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5   SCORING="none" \
-ABI=NoScore   docker-compose -f ml-test.yml -p bfl-ml up
+DATASET=mnist docker-compose -f ml-test.yml -p bfl-init up
 ```
 
 
 Run a shell in selected image, as follows:
 
 ```sh
-docker exec -it <image-name> /bin/sh
+docker exec -it bfl-init_server_1 /bin/sh
+ipfs add ./dataset/model.h5
+ipfs add ./dataset/weights.pkl
 ```

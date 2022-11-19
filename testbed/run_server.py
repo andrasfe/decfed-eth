@@ -21,6 +21,10 @@ from blocklearning.contract import RoundPhase
 @click.option('--val', help='validation data .npz file', required=True)
 @click.option('--scoring', default=None, help='scoring method')
 def main(provider, ipfs, abi, account, passphrase, contract, log, val, scoring):
+
+  if ipfs == 'None':
+    ipfs = None
+
   log = utilities.setup_logger(log, "server")
   contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)

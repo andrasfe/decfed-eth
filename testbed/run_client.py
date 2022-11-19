@@ -19,11 +19,15 @@ import tensorflow as tf
 @click.option('--passphrase', help='passphrase to unlock account', required=True)
 @click.option('--contract', help='contract address', required=True)
 @click.option('--log', help='logging file', required=True)
-@click.option('--train', help='training data .npz file', required=True)
-@click.option('--test', help='training data .npz file', required=True)
+@click.option('--train', help='training data .tfrecord file', required=True)
+@click.option('--test', help='training data .tfrecord file', required=True)
 @click.option('--scoring', default=None, help='scoring method')
 def main(provider, ipfs, abi, account, passphrase, contract, log, train, test, scoring):
   log = utilities.setup_logger(log, "client")
+
+  if ipfs == 'None':
+    ipfs = None
+
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)
   train_ds = tf.data.experimental.load(train)
 

@@ -2,40 +2,16 @@ version: '3.7'
 
 services:
   server:
-    hostname: server
+    hostname: ml_initializer
     image: bfl-node
     entrypoint: ["tail", "-f", "/dev/null"]
     deploy:
-      replicas: $SERVERS
+      replicas: 2
     environment:
-      - IPFS_API=/dns/host.docker.internal/tcp/5001
-      - CONTRACT=$CONTRACT
-      - SCORING=$SCORING
-      - MINERS=$MINERS
       - DATASET=$DATASET
     volumes:
       # Use the following volume for a public validation dataset:
       - './datasets/$DATASET/5:/root/dataset'
-      # - './datasets/$DATASET/$SERVERS:/root/dataset'
-      - ../build/contracts/$ABI.json:/root/abi.json
-    extra_hosts:
-    - "host.docker.internal:host-gateway"
-
-  client:
-    hostname: client
-    image: bfl-node
-    entrypoint: ["tail", "-f", "/dev/null"]
-    deploy:
-      replicas: $CLIENTS
-    environment:
-      - IPFS_API=/dns/host.docker.internal/tcp/5001
-      - CONTRACT=$CONTRACT
-      - SCORING=$SCORING
-      - MINERS=$MINERS
-      - DATASET=$DATASET
-    volumes:
-      - './datasets/$DATASET/$CLIENTS:/root/dataset'
-      - ../build/contracts/$ABI.json:/root/abi.json
     extra_hosts:
     - "host.docker.internal:host-gateway"
 

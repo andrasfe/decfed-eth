@@ -1,0 +1,11 @@
+--2022-11-17 21:42:38--  https://dist.ipfs.tech/kubo/v0.16.0/kubo_v0.16.0_linux-amd64.tar.gz
+Resolving dist.ipfs.tech (dist.ipfs.tech)... 209.94.78.1, 2602:fea2:3::1
+Connecting to dist.ipfs.tech (dist.ipfs.tech)|209.94.78.1|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 34418406 (33M) [application/gzip]
+Saving to: ‘kubo_v0.16.0_linux-amd64.tar.gz’
+
+kubo_v0.16.0_linux-amd64.tar.gz                    0%[                                                                                                           ]       0  --.-KB/s               kubo_v0.16.0_linux-amd64.tar.gz                    5%[====>                                                                                                      ]   1.70M  8.50MB/s               kubo_v0.16.0_linux-amd64.tar.gz                   45%[================================================>                                                          ]  15.08M  37.7MB/s               kubo_v0.16.0_linux-amd64.tar.gz                   88%[==============================================================================================>            ]  29.17M  48.6MB/s               kubo_v0.16.0_linux-amd64.tar.gz                  100%[==========================================================================================================>]  32.82M  50.4MB/s    in 0.7s    
+
+2022-11-17 21:42:38 (50.4 MB/s) - ‘kubo_v0.16.0_linux-amd64.tar.gz’ saved [34418406/34418406]
+

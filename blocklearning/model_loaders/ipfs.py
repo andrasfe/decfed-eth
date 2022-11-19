@@ -14,6 +14,7 @@ class IpfsModelLoader():
   def __load(self, model_cid, weights_cid = ""):
     with tempfile.TemporaryDirectory() as tempdir:
       model_path = os.path.join(tempdir, 'model.h5')
+      print('model/weight cid-s', model_cid, weights_cid)
 
       if self.direct:
         os.system(f"ipfs get -o {model_path} {model_cid}")
