@@ -12,7 +12,8 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            // "args": ["--cid", "QmfF98dVFYnMbpY2QVWBBQVA1oAmSoHz2riqaUTPkJZvP7"]
+            // "args": ["--contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0", "--abi", "../build/contracts/NoScore.json", "--rounds", "50"]
+            "args": ["--contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0"]
         }
     ]
 }

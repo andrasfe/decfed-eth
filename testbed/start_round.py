@@ -13,13 +13,14 @@ import blocklearning
 import blocklearning.model_loaders as model_loaders
 import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as butilities
+import tensorflow as tf
 
 # Setup Log
 log_file = '../../blocklearning-results/results/CURRENT/logs/manager.log'
 os.makedirs(os.path.dirname(log_file), exist_ok=True)
 if os.path.exists(log_file):
   print('a log already exists, please make sure to save the previous logs')
-  exit(1)
+  # exit(1)
 
 logging.basicConfig(level="INFO", handlers=[
   logging.StreamHandler(),
@@ -38,17 +39,23 @@ def get_owner_account(data_dir):
 @click.option('--abi', default='../build/contracts/NoScore.json', help='contract abi file')
 @click.option('--contract', required=True, help='contract address')
 @click.option('--scoring', default='none', help='scoring method')
-@click.option('--trainers', default='random', help='clients selection method')
+@click.option('--trainers', default='all', help='clients selection method')
 @click.option('--data-dir', default=utilities.default_datadir, help='ethereum data directory path')
-@click.option('--val', default='./datasets/mnist/5/owner_val.npz', help='validation data .npz file')
+@click.option('--val', default='./datasets/mnist/5/owner_val.tfrecord', help='validation data .tfrecord file')
 @click.option('--rounds', default=1, type=click.INT, help='number of rounds')
-def main(provider, abi, contract, scoring, trainers,  data_dir, val, rounds):
+@click.option('--ipfs_api', default='none', help='whether to use API or not')
+def main(provider, abi, contract, scoring, trainers,  data_dir, val, rounds, ipfs_api):
   account_address, account_password = get_owner_account(data_dir)
   contract = blocklearning.Contract(log, provider, abi, account_address, account_password, contract)
-  weights_loader = weights_loaders.IpfsWeightsLoader()
-  model_loader = model_loaders.IpfsModelLoader(contract, weights_loader)
+
+  if ipfs_api == 'none':
+    ipfs_api = None
+
+  weights_loader = weights_loaders.IpfsWeightsLoader(ipfs_api=ipfs_api)
+  model_loader = model_loaders.IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs_api)
   model = model_loader.load()
-  x_val, y_val = butilities.numpy_load(val)
+  # x_val, y_val = butilities.numpy_load(val)
+  train_ds = tf.data.experimental.load(val)
 
   def choose_participants():
     all_trainers = contract.get_trainers()

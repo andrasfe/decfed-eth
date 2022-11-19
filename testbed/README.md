@@ -165,7 +165,7 @@ done
 
 ```bash
 python3 start_round.py \
-  --contract 0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
+  --contract 0x2B8d5C0B445aF5C0059766512bd33E71f0073af0 \
   --abi ../build/contracts/NoScore.json \
   --rounds 50
 ```
