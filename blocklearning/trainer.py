@@ -57,7 +57,7 @@ class Trainer():
     submission = {
       'trainingAccuracy': trainingAccuracy,
       'testingAccuracy': validationAccuracy,
-      'trainingDataPoints': self.train_ds_batched.cardinality().numpy(),
+      'trainingDataPoints': 100,
       'weights': weights_id
     }
     self.contract.submit_submission(submission)

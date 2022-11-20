@@ -26,7 +26,7 @@ def weighted_fed_avg(submissions, model_size, weights_loader, avg_weights):
   scaling_factor = 1/len(submissions)
 
   for i, submission in enumerate(submissions):
-    weights_cid = submission['weights']
+    weights_cid = submission[3]
     weights = weights_loader.load(weights_cid)
     scaled_weights = scale_model_weights(weights, scaling_factor)
     scaled_local_weight_list.append(scaled_weights)
