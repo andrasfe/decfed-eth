@@ -1,7 +1,7 @@
 import json
 import time
 from .utilities import float_to_int
-from tensorflow.keras.optimizers import SGD
+from .training_algos import RegularAlgo
 
 class Trainer():
   def __init__(self, contract, weights_loader, model, data, logger = None, priv = None):
@@ -10,45 +10,33 @@ class Trainer():
     self.weights_loader = weights_loader
     self.contract = contract
     self.train_ds_batched = data
-    self.model = model
+    self.training_algo = RegularAlgo(model, 5, True)
     self.__register()
+
+  def __log_info(self, message):
+    if self.logger is not None:
+      self.logger.info(message)
+
 
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
 
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))
+    self.__log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))
 
     if weights_id != '':
       weights = self.weights_loader.load(weights_id)
-      self.model.set_weights(weights)
+      self.training_algo.set_weights(weights)
 
-      lr = 0.01 
-      local_rounds = 5
-      comms_round = 5
-      loss='categorical_crossentropy'
-      metrics = ['accuracy']
-      optimizer = SGD(lr=lr, 
-                      decay=lr / comms_round, 
-                      momentum=0.9
-                    )          
+    self.__log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
 
-      self.model.compile(loss=loss, 
-            optimizer=optimizer, 
-            metrics=metrics)
+    history = self.training_algo.fit(self.train_ds_batched)
 
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
-
-    history = self.model.fit(self.train_ds_batched, epochs=local_rounds, verbose=True)
-
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
+    self.__log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
 
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(history.history["accuracy"][-1]*100)
 
-    weights = self.model.get_weights()
+    weights = self.training_algo.get_weights()
     if self.priv is not None:
       weights = self.priv.privatize(weights, validationAccuracy)
 
@@ -62,15 +50,12 @@ class Trainer():
     }
     self.contract.submit_submission(submission)
 
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
+    self.__log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 
   # Private utilities
   def __register(self):
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'checking_registration', 'ts': time.time_ns() }))
+    self.__log_info(json.dumps({ 'event': 'checking_registration', 'ts': time.time_ns() }))
 
     self.contract.register_as_trainer()
 
-    if self.logger is not None:
-      self.logger.info(json.dumps({ 'event': 'registration_checked', 'ts': time.time_ns() }))
+    self.__log_info(json.dumps({ 'event': 'registration_checked', 'ts': time.time_ns() }))
