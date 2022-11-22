@@ -35,13 +35,8 @@ def main(ipfs_api, model_cid, weights_cid, model_path, weights_path, data_path):
     aggregator = FedAvgAggregator(model.count, weights_loader)
     aggregator = Aggregator(contract, weights_loader, model, aggregator, with_scores=False, logger=None)
 
-    submission = {
-        'trainingAccuracy': 99933034181594841088, 
-        'testingAccuracy': 99933034181594841088, 
-        'trainingDataPoints': 140, 
-        'weights': weights_cid
-    }
-
+    submission = (99933034181594841088, 99933034181594841088, 140, weights_cid)
+    
     submissions = [submission]*2
     trainers = ['trainer']*2
 

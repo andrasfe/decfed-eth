@@ -42,7 +42,7 @@ def main(provider, ipfs, abi, account, passphrase, contract, log, train, test, s
   priv = None
   # priv = diffpriv.Gaussian(epsilon=l5, sensitivity=1e-1/3)
   # priv = diffpriv.Gaussian(epsilon=1, sensitivity=1e-1/2)
-  trainer = blocklearning.Trainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds, logger=log, priv=priv)
+  trainer = blocklearning.trainers.RegularTrainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds, logger=log, priv=priv)
 
   # Setup the scorer for the clients. Only Marginal Gain and BlockFlow run on the client
   # device and use the client's testing dataset as the validation dataset for the scores.

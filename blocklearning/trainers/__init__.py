@@ -1,0 +1,2 @@
+from .regular_trainer import RegularTrainer
+from .peer_aggregating_trainer import PeerAggregatingTrainer

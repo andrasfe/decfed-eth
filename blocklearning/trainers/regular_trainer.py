@@ -1,9 +1,10 @@
 import json
 import time
-from .utilities import float_to_int
-from .training_algos import RegularAlgo
+from .base_trainer import BaseTrainer
+from ..utilities import float_to_int
+from ..training_algos import RegularAlgo
 
-class Trainer():
+class RegularTrainer(BaseTrainer):
   def __init__(self, contract, weights_loader, model, data, logger = None, priv = None):
     self.logger = logger
     self.priv = priv
@@ -11,27 +12,22 @@ class Trainer():
     self.contract = contract
     self.train_ds_batched = data
     self.training_algo = RegularAlgo(model, 5, True)
-    self.__register()
-
-  def __log_info(self, message):
-    if self.logger is not None:
-      self.logger.info(message)
-
+    super().__init__()
 
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
 
-    self.__log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))
+    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))
 
     if weights_id != '':
       weights = self.weights_loader.load(weights_id)
       self.training_algo.set_weights(weights)
 
-    self.__log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
+    self._log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
 
     history = self.training_algo.fit(self.train_ds_batched)
 
-    self.__log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
+    self._log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
 
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(history.history["accuracy"][-1]*100)
@@ -50,12 +46,5 @@ class Trainer():
     }
     self.contract.submit_submission(submission)
 
-    self.__log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
+    self._log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 
-  # Private utilities
-  def __register(self):
-    self.__log_info(json.dumps({ 'event': 'checking_registration', 'ts': time.time_ns() }))
-
-    self.contract.register_as_trainer()
-
-    self.__log_info(json.dumps({ 'event': 'registration_checked', 'ts': time.time_ns() }))

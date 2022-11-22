@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from blocklearning.trainer import Trainer
+from blocklearning.trainers import RegularTrainer, PeerAggregatingTrainer
 from blocklearning.aggregator import Aggregator
 from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
@@ -71,6 +71,7 @@ def main(ipfs_api, cid, weights_path, data_path, data_dir, provider, abi, contra
     model = smlp_global.build(build_shape, 10) 
 
     model.set_weights(weights)
+    aggregator = FedAvgAggregator(-1, weights_loader)
 
     trainers = []
     local_contracts = []
@@ -80,11 +81,11 @@ def main(ipfs_api, cid, weights_path, data_path, data_dir, provider, abi, contra
         local_contracts.append(local_contract)
         local_model = tf.keras.models.clone_model(model)
         train_ds = tf.data.experimental.load(data_path.format(i))
-        trainer = Trainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
+        # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
+        trainer = PeerAggregatingTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds, aggregator=aggregator)
         trainers.append(trainer)
 
 
-    aggregator = FedAvgAggregator(-1, weights_loader)
     account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', len(trainers))
     aggregator_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
     server = Aggregator(aggregator_contract, weights_loader, model, aggregator, with_scores=False, logger=log)

@@ -115,6 +115,20 @@ abstract contract Base {
     }
   }
 
+  function getUpdatesForPriorRound() public view returns (uint, address[] memory, Update[] memory) {
+    require(round > 1, "NGT1");
+
+    Update[] memory roundUpdates = new Update[](selectedTrainers[round - 1].length);
+    address[] memory roundTrainers = new address[](selectedTrainers[round - 1].length);
+    for (uint i = 0; i < selectedTrainers[round - 1].length; i++) {
+      address trainer = selectedTrainers[round - 1][i];
+      roundTrainers[i] = trainer;
+      roundUpdates[i] = updates[round - 1][trainer];
+    }
+    return (round, roundTrainers, roundUpdates);
+  }
+
+
   function getUpdatesForAggregation() public view returns (uint, address[] memory, Update[] memory) {
     require(roundPhase == RoundPhase.WaitingForAggregations, "NWFA");
     require(isSelectedAggregator() == true, "CSNS");

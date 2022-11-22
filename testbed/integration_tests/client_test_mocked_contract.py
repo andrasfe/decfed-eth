@@ -1,4 +1,4 @@
-from blocklearning.trainer import Trainer
+from blocklearning.trainers import RegularTrainer
 from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
 import click
@@ -32,7 +32,7 @@ def main(ipfs_api, cid, weights_path, data_path):
     contract = Mock()
     contract.get_training_round.return_value = (1, cid)
     train_ds = tf.data.experimental.load(data_path)
-    trainer = Trainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds)
+    trainer = RegularTrainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds)
     trainer.train()
     args = contract.submit_submission.call_args.args
     print(args)
