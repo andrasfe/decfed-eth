@@ -5,12 +5,13 @@ from ..utilities import float_to_int
 from ..training_algos import RegularAlgo
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, weights_loader, model, data, aggregator, logger = None, priv = None):
+  def __init__(self, contract, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None):
     self.logger = logger
     self.priv = priv
     self.weights_loader = weights_loader
     self.contract = contract
-    self.train_ds_batched = data
+    self.train_ds_batched = train_data
+    self.test_ds_data = test_data
     self.training_algo = RegularAlgo(model, 5, True)
     self.aggregator = aggregator
     super().__init__()

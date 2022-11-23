@@ -47,14 +47,15 @@ def get_account_by_role_by_index(data_dir, role, idx):
 @click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='QmfGcAp7mfxzrxSNNZmmtvpPAwToZ4Bbjz38v8ivKneLSb', help='api uri or None')
 @click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
-@click.option('--data_path', default='../datasets/mnist/5/train/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--train_data_path', default='../datasets/mnist/5/train/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--test_data_path', default='../datasets/mnist/5/test/{}.tfrecord', help='location of client data (tfrecs)')
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--abi', default='../../build/contracts/NoScore.json', help='contract abi file')
 @click.option('--contract_address', required=True, help='contract address')
 
 
-def main(ipfs_api, cid, weights_path, data_path, data_dir, provider, abi, contract_address):
+def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir, provider, abi, contract_address):
     account_address, account_password = get_account_by_role_by_index(data_dir, 'owner', 0)
     contract = Contract(log, provider, abi, account_address, account_password, contract_address)
 
@@ -80,9 +81,11 @@ def main(ipfs_api, cid, weights_path, data_path, data_dir, provider, abi, contra
         local_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
         local_contracts.append(local_contract)
         local_model = tf.keras.models.clone_model(model)
-        train_ds = tf.data.experimental.load(data_path.format(i))
+        train_ds = tf.data.experimental.load(train_data_path.format(i))
+        test_ds = tf.data.experimental.load(test_data_path.format(i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
-        trainer = PeerAggregatingTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds, aggregator=aggregator)
+        trainer = PeerAggregatingTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, 
+                                        train_data=train_ds, test_data=test_ds, aggregator=aggregator)
         trainers.append(trainer)
 
 
