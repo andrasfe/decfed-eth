@@ -11,7 +11,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.weights_loader = weights_loader
     self.contract = contract
     self.train_ds_batched = train_data
-    self.test_ds_data = test_data
+    self.test_ds_batched = test_data
     self.training_algo = RegularAlgo(model, 5, True)
     self.aggregator = aggregator
     super().__init__()
@@ -43,8 +43,10 @@ class PeerAggregatingTrainer(BaseTrainer):
 
     self._log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
 
+    acc, loss = self.training_algo.test(self.test_ds_batched)
+
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
-    validationAccuracy = float_to_int(history.history["accuracy"][-1]*100)
+    validationAccuracy = float_to_int(acc*100)
 
     weights = self.training_algo.get_weights()
     if self.priv is not None:

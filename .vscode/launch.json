@@ -13,7 +13,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             // "args": ["--contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0", "--abi", "../build/contracts/NoScore.json", "--rounds", "50"]
-            "args": ["--contract_address", "0x57e9139a4D7b41B0483f0D77f25681b9a1210Ee0"]
+            "args": ["--contract_address", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0"]
         }
     ]
 }

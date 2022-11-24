@@ -1,6 +1,8 @@
 
 from tensorflow.keras.optimizers import SGD
 from .base_algo import BaseAlgo
+import tensorflow as tf
+from sklearn.metrics import accuracy_score
 
 class RegularAlgo(BaseAlgo):
 
@@ -20,6 +22,16 @@ class RegularAlgo(BaseAlgo):
 
     def fit(self, batched_ds):
         return self.model.fit(batched_ds, epochs=self.epochs, verbose=self.verbose)
+
+    def test(self, batched_ds):
+        acc = []
+        loss = []
+        for slice in batched_ds:
+            cce = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+            logits = self.model.predict(slice[0])
+            loss.append(cce(slice[1], logits))
+            acc.append(accuracy_score(tf.argmax(logits, axis=1), tf.argmax(slice[1], axis=1)))
+        return sum(acc)/len(acc), sum(loss)/len(loss)
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
