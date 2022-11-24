@@ -7,7 +7,7 @@ from blocklearning.trainers import RegularTrainer, PeerAggregatingTrainer
 from blocklearning.aggregator import Aggregator
 from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
-from blocklearning.aggregators import FedAvgAggregator
+from blocklearning.aggregators import FedAvgAggregator, BasilAggregator
 from blocklearning.contract import RoundPhase
 import click
 import tensorflow as tf
@@ -73,6 +73,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
 
     model.set_weights(weights)
     aggregator = FedAvgAggregator(-1, weights_loader)
+    basil_aggregator = BasilAggregator(weights_loader)
 
     trainers = []
     local_contracts = []
@@ -85,7 +86,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
         test_ds = tf.data.experimental.load(test_data_path.format(i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
         trainer = PeerAggregatingTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, 
-                                        train_data=train_ds, test_data=test_ds, aggregator=aggregator)
+                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator)
         trainers.append(trainer)
 
 
@@ -110,8 +111,8 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
         for i in range(len(trainers)):
             try:
                 trainers[i].train()
-            except:
-                log.info('trainer {} already submitted for round {}'.format(i, round))
+            except Exception as e:
+                log.info('Trainer {}, Error: {} for round {}'.format(i, e, round))
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_AGGREGATIONS:

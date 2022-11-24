@@ -19,23 +19,23 @@ class PeerAggregatingTrainer(BaseTrainer):
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
 
-    weights = None
+    if weights_id != '':
+      weights = self.weights_loader.load(weights_id)
+      self.training_algo.set_weights(weights, freeze_except_last_dense=True)
+
     # aggregate other trainers models before training own
     if round > 1:
         (_, trainers, submissions) = self.contract.get_submissions_from_prior_round()
 
         self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
-        weights = self.aggregator.aggregate(trainers, submissions, None, None)
+        # weights = self.aggregator.aggregate(trainers, submissions, None, None) # this for fedavg
+        weights = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
 
         self._log_info(json.dumps({ 'event': 'self_agg_end', 'round': round,'ts': time.time_ns() }))
 
 
-    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))
-
-    if weights == None and weights_id != '':
-      weights = self.weights_loader.load(weights_id)
-      self.training_algo.set_weights(weights)
+    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))      
 
     self._log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
 

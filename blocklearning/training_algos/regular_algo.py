@@ -33,10 +33,17 @@ class RegularAlgo(BaseAlgo):
             acc.append(accuracy_score(tf.argmax(logits, axis=1), tf.argmax(slice[1], axis=1)))
         return sum(acc)/len(acc), sum(loss)/len(loss)
 
-    def set_weights(self, weights):
+    def set_weights(self, weights, freeze_except_last_dense = False):
         self.model.set_weights(weights)
+
+        if  freeze_except_last_dense:
+            for layer in self.model.layers[:-2]:
+                layer.trainable=False
 
     def get_weights(self):
         return self.model.get_weights()
+
+    def get_model(self):
+        return self.model
 
 

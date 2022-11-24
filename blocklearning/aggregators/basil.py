@@ -9,12 +9,12 @@ class BasilAggregator():
     def __init__(self, weights_loader):
         self.weights_loader = weights_loader
 
-    def __calc_F1(self, test_data_tf,  y_local_test, model, labels = [0,1,2,3,4,5,6,7,8,9], logits = None, fi=10):
-        if logits == None:
-            logits = model.predict(test_data_tf)
+    def __calc_F1(self, data_tf, model, labels = [0,1,2,3,4,5,6,7,8,9]):
+        x, y = tuple(zip(*data_tf))
+        logits = model.predict(x[1])
 
-        detailed_f1 = f1_score(tf.argmax(logits, axis=1), tf.argmax(y_local_test, axis=1), average=None, labels=labels, zero_division=1)
-        f1 = f1_score(tf.argmax(logits, axis=1), tf.argmax(y_local_test, axis=1), average='macro', labels=labels, zero_division=1)
+        detailed_f1 = f1_score(tf.argmax(logits, axis=1), tf.argmax(y[1], axis=1), average=None, labels=labels, zero_division=1)
+        f1 = f1_score(tf.argmax(logits, axis=1), tf.argmax(y[1], axis=1), average='macro', labels=labels, zero_division=1)
 
         return f1, detailed_f1
 
@@ -60,9 +60,8 @@ class BasilAggregator():
         
         return my_new_layer
 
-    def aggregate(self, my_model, submissions, data):
-
-        my_f1, my_detailed_f1 = self.__calc_F1(data[0], data[1], my_model)
+    def aggregate(self, my_model, submissions, data_tf):
+        my_f1, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
         my_last_dense_layer = self.__get_last_dense_layer_weights(my_model)
 
         weight_list = []
@@ -72,7 +71,7 @@ class BasilAggregator():
         fo_wg_list = []
         fo_columns_list = []
 
-        model = SimpleMLP.build_model()
+        model = SimpleMLP.build(784, 10)
 
         for submission in submissions:
             weights_cid = submission[3]
@@ -80,7 +79,7 @@ class BasilAggregator():
             weight_list.append(weights)
             model.set_weights(weights)
             last_dense_layer_list.append(self.__get_last_dense_layer_weights(model))
-            f1 = self.__calc_F1(data[0], data[1], my_model)
+            f1 = self.__calc_F1(data_tf, model)
             f1_list.append(f1)
             fa, fo, fo_columns = self.__compute_fa_fo_wg(my_detailed_f1, f1[1], fi=15, mu=0.9, omega_fa1=1.0, omega_fa2=0.0001, omega_fo1=0.99, omega_fo2=0.0001)
             fa_wg_list.append(fa)
