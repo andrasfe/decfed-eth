@@ -5,14 +5,14 @@ from ..utilities import float_to_int
 from ..training_algos import RegularAlgo
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None):
+  def __init__(self, contract, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=3):
     self.logger = logger
     self.priv = priv
     self.weights_loader = weights_loader
     self.contract = contract
     self.train_ds_batched = train_data
     self.test_ds_batched = test_data
-    self.training_algo = RegularAlgo(model, 5, True)
+    self.training_algo = RegularAlgo(model, rounds, True)
     self.aggregator = aggregator
     super().__init__()
 
@@ -23,6 +23,14 @@ class PeerAggregatingTrainer(BaseTrainer):
       weights = self.weights_loader.load(weights_id)
       self.training_algo.set_weights(weights, freeze_except_last_dense=True)
 
+    history = self.training_algo.fit(self.train_ds_batched)
+
+    self._log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
+
+    acc, loss = self.training_algo.test(self.test_ds_batched)
+
+    self._log_info(json.dumps({ 'event': 'test_end', 'round': round,'ts': time.time_ns() }))
+
     # aggregate other trainers models before training own
     if round > 1:
         (_, trainers, submissions) = self.contract.get_submissions_from_prior_round()
@@ -30,20 +38,13 @@ class PeerAggregatingTrainer(BaseTrainer):
         self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
         # weights = self.aggregator.aggregate(trainers, submissions, None, None) # this for fedavg
-        weights = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
+        new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
 
         self._log_info(json.dumps({ 'event': 'self_agg_end', 'round': round,'ts': time.time_ns() }))
 
 
-    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'weights': weights_id, 'ts': time.time_ns() }))      
-
-    self._log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
-
-    history = self.training_algo.fit(self.train_ds_batched)
-
-    self._log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
-
-    acc, loss = self.training_algo.test(self.test_ds_batched)
+        self.training_algo.set_model(new_model)
+        acc, loss = self.training_algo.test(self.test_ds_batched)
 
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(acc*100)
