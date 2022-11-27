@@ -22,6 +22,18 @@ def get_abi(filename):
     contract_json = json.load(file)
   return contract_json['abi']
 
+    # enum RoundPhase {
+    #     Stopped,
+    #     WaitingForUpdates,
+    #     WaitingForScores,
+    #     WaitingForAggregations,
+    #     WaitingForTermination,
+    #     WaitingForBackpropagation,
+    #     WaitingForFirstUpdate,
+    #     WaitingForProofPresentment
+    # }
+
+
 class RoundPhase(Enum):
   STOPPED = 0
   WAITING_FOR_UPDATES = 1
@@ -29,6 +41,8 @@ class RoundPhase(Enum):
   WAITING_FOR_AGGREGATIONS = 3
   WAITING_FOR_TERMINATION = 4
   WAITING_FOR_BACKPROPAGATION = 5
+  WAITING_FOR_FIRST_UPDATE = 6
+  WAITING_FOR_PROOF_PRESENTMENT = 7
 
 class Contract():
   def __init__(self, log, provider, abi_file, account, passphrase, contract_address):
@@ -108,6 +122,17 @@ class Contract():
     if not self.contract.functions.registeredAggregators(self.account).call(self.default_opts):
       tx = self.contract.functions.registerAggregator().transact(self.default_opts)
       return tx, self.__wait_tx(tx)
+
+  def submit_first_update(self, submission):
+    self.__unlock_account()
+    tx = self.contract.functions.submitFirstUpdate(submission).transact(self.default_opts)
+    return tx, self.__wait_tx(tx)
+
+  def validate_pedersen(self, r, v, hiddenWeights):
+    self.__unlock_account()
+    tx = self.contract.functions.validatePedersen(r, v, hiddenWeights).transact(self.default_opts)
+    return tx, self.__wait_tx(tx)
+
 
   def submit_submission(self, submission):
     self.__unlock_account()

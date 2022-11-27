@@ -15,13 +15,13 @@ contract Different {
 
     enum RoundPhase {
         Stopped,
-        WaitingForFirstUpdate,
-        WaitingForProofPresentment,
         WaitingForUpdates,
         WaitingForScores,
         WaitingForAggregations,
         WaitingForTermination,
-        WaitingForBackpropagation
+        WaitingForBackpropagation,
+        WaitingForFirstUpdate,
+        WaitingForProofPresentment
     }
 
     // Initialization Details
@@ -134,7 +134,7 @@ contract Different {
         virtual
         returns (uint256, string memory)
     {
-        require(roundPhase == RoundPhase.WaitingForUpdates, "NWFS");
+        // require(roundPhase == RoundPhase.WaitingForUpdates, "NWFS");
         require(isSelectedTrainer(), "TNP");
         return (round, weights[round - 1]);
     }
@@ -155,10 +155,11 @@ contract Different {
 
     function validatePedersen(
         uint256 r,
-        uint256 v
+        uint256 v,
+        string memory hiddenWeights
     ) public {
         require(roundPhase == RoundPhase.WaitingForProofPresentment, "NWFPP");
-        require(updatesSubmitted[round][msg.sender] == false, "AS");
+        require(round == 1 && updatesSubmitted[round][msg.sender] == true, "AS");
 
         //   PedersenContract pedersen = PedersenContract(pedersenAddr);
         //   submissions[addr].validated = pedersen.verify(r, v, submissions[addr].firstCommit, submissions[addr].secondCommit);

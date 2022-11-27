@@ -3,6 +3,7 @@ import time
 from .base_trainer import BaseTrainer
 from ..utilities import float_to_int
 from ..training_algos import RegularAlgo
+from blocklearning.contract import RoundPhase
 
 class PeerAggregatingTrainer(BaseTrainer):
   def __init__(self, contract, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=3):
@@ -14,7 +15,37 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.test_ds_batched = test_data
     self.training_algo = RegularAlgo(model, rounds, True)
     self.aggregator = aggregator
+    self.__hiddenWeights = ''
+    self.__r = 0
+    self.__v = 0
     super().__init__()
+
+  def __do_first_update(self):
+    history = self.training_algo.fit(self.train_ds_batched)
+    acc, loss = self.training_algo.test(self.test_ds_batched)
+    trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
+    validationAccuracy = float_to_int(acc*100)
+
+    weights = self.training_algo.get_weights()
+    # load trained model to IPFS and commit to address
+    self.__hiddenWeights = self.weights_loader.store(weights)
+    self.__r = 0
+    self.__v = 0
+
+    submission = {
+      'trainingAccuracy': trainingAccuracy,
+      'testingAccuracy': validationAccuracy,
+      'trainingDataPoints': 100,
+      'weights': '',
+      'firstCommit': 123,
+      'secondCommit': 456
+    }
+
+    self.contract.submit_first_update(submission)    
+
+  def __do_proof_presentment(self):
+    self.contract.validate_pedersen(self.__r, self.__v, self.__hiddenWeights)
+
 
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
@@ -23,45 +54,41 @@ class PeerAggregatingTrainer(BaseTrainer):
       weights = self.weights_loader.load(weights_id)
       self.training_algo.set_weights(weights, freeze_except_last_dense=True)
 
-    history = self.training_algo.fit(self.train_ds_batched)
 
-    self._log_info(json.dumps({ 'event': 'train_end', 'round': round,'ts': time.time_ns() }))
+    phase = self.contract.get_round_phase()
+        
+    if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
+      self.__do_first_update()
+    elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
+      self.__do_proof_presentment()
+    elif phase == RoundPhase.WAITING_FOR_UPDATES:
+      (_, trainers, submissions) = self.contract.get_submissions_from_prior_round()
+      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
-    acc, loss = self.training_algo.test(self.test_ds_batched)
+      history = self.training_algo.fit(self.train_ds_batched)
+      new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
+      self.training_algo.set_model(new_model)
+      acc, loss = self.training_algo.test(self.test_ds_batched)
+      self._log_info(json.dumps({ 'event': 'self_agg_end', 'round': round,'ts': time.time_ns() }))
 
-    self._log_info(json.dumps({ 'event': 'test_end', 'round': round,'ts': time.time_ns() }))
+      trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
+      validationAccuracy = float_to_int(acc*100)
 
-    # aggregate other trainers models before training own
-    if round > 1:
-        (_, trainers, submissions) = self.contract.get_submissions_from_prior_round()
+      weights = self.training_algo.get_weights()
+      if self.priv is not None:
+        weights = self.priv.privatize(weights, validationAccuracy)
 
-        self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
+      weights_id = self.weights_loader.store(weights)
 
-        # weights = self.aggregator.aggregate(trainers, submissions, None, None) # this for fedavg
-        new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
+      submission = {
+        'trainingAccuracy': trainingAccuracy,
+        'testingAccuracy': validationAccuracy,
+        'trainingDataPoints': 100,
+        'weights': weights_id,
+        'firstCommit': 0,
+        'secondCommit': 0
+      }
+      self.contract.submit_submission(submission)
 
-        self._log_info(json.dumps({ 'event': 'self_agg_end', 'round': round,'ts': time.time_ns() }))
-
-
-        self.training_algo.set_model(new_model)
-        acc, loss = self.training_algo.test(self.test_ds_batched)
-
-    trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
-    validationAccuracy = float_to_int(acc*100)
-
-    weights = self.training_algo.get_weights()
-    if self.priv is not None:
-      weights = self.priv.privatize(weights, validationAccuracy)
-
-    weights_id = self.weights_loader.store(weights)
-
-    submission = {
-      'trainingAccuracy': trainingAccuracy,
-      'testingAccuracy': validationAccuracy,
-      'trainingDataPoints': 100,
-      'weights': weights_id
-    }
-    self.contract.submit_submission(submission)
-
-    self._log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
+      self._log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 

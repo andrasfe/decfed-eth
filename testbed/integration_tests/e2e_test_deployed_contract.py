@@ -43,6 +43,14 @@ def get_account_by_role_by_index(data_dir, role, idx):
     account_password = accounts[role][account_address]
     return account_address, account_password
 
+def run_all_trainers(trainers):
+    for i in range(len(trainers)):
+        try:
+            trainers[i].train()
+        except Exception as e:
+            log.info('Trainer {}, Error: {} for round {}'.format(i, e, round))
+
+
 @click.command()
 @click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='QmfGcAp7mfxzrxSNNZmmtvpPAwToZ4Bbjz38v8ivKneLSb', help='api uri or None')
@@ -51,7 +59,7 @@ def get_account_by_role_by_index(data_dir, role, idx):
 @click.option('--test_data_path', default='../datasets/mnist/5/test/{}.tfrecord', help='location of client data (tfrecs)')
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
-@click.option('--abi', default='../../build/contracts/NoScore.json', help='contract abi file')
+@click.option('--abi', default='../../build/contracts/Different.json', help='contract abi file')
 @click.option('--contract_address', required=True, help='contract address')
 
 
@@ -101,18 +109,23 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     round = contract.get_round()
 
     if phase == RoundPhase.STOPPED:
-        contract.start_round(all_trainers, all_aggregators)
+        contract.start_round(all_trainers, all_aggregators, 150)
         round = contract.get_round()
         log.info('starting round {}'.format(round))
 
 
     phase = contract.get_round_phase()
+    if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
+        run_all_trainers(trainers)
+
+    phase = contract.get_round_phase()
+    if phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
+        run_all_trainers(trainers)
+
+    phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_UPDATES:
-        for i in range(len(trainers)):
-            try:
-                trainers[i].train()
-            except Exception as e:
-                log.info('Trainer {}, Error: {} for round {}'.format(i, e, round))
+        run_all_trainers(trainers)
+
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_AGGREGATIONS:
