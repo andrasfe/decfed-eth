@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+// ZKP package used as-is from: https://github.com/18dew/solGrined
+import './ZKP/PedersenContract.sol';
+
 contract Different {
     struct Update {
         // the next 4 elements are onyl relevant starting round 2
@@ -26,6 +29,7 @@ contract Different {
 
     // Initialization Details
     address public owner;
+    address public pedersenAddr;
     uint public startBlock;
     uint public maxDurationPerCycle;
     string public model; // IPFS CID for model encoded as h5.
@@ -55,8 +59,9 @@ contract Different {
     mapping(uint256 => mapping(address => string)) public aggregations; // Round => Address => Weights ID
     mapping(uint256 => mapping(string => uint256)) aggregationsResultsCount; // Round => Weights ID => Count
 
-    constructor(string memory _model, string memory _weights) {
+    constructor(address pedAddr, string memory _model, string memory _weights) {
         owner = msg.sender;
+        pedersenAddr = pedAddr;
         model = _model;
         weights[0] = _weights;
     }
@@ -161,8 +166,16 @@ contract Different {
         require(roundPhase == RoundPhase.WaitingForProofPresentment, "NWFPP");
         require(round == 1 && updatesSubmitted[round][msg.sender] == true, "AS");
 
-        //   PedersenContract pedersen = PedersenContract(pedersenAddr);
-        //   submissions[addr].validated = pedersen.verify(r, v, submissions[addr].firstCommit, submissions[addr].secondCommit);
+        PedersenContract pedersen = PedersenContract(pedersenAddr);
+        bool valid = pedersen.verify(r, v, updates[round][msg.sender].firstCommit, updates[round][msg.sender].secondCommit);
+
+        if(valid == true) {
+            updates[round][msg.sender].weights = hiddenWeights;
+        }
+        else {
+            delete updates[round][msg.sender];
+            updatesSubmitted[round][msg.sender] = true;
+        }
 
         if (block.number - startBlock > maxDurationPerCycle  || updatesCount[round] == selectedTrainers[round].length) {
             roundPhase = RoundPhase.WaitingForUpdates;
