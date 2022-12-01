@@ -12,6 +12,7 @@ from blocklearning.contract import RoundPhase
 import click
 import tensorflow as tf
 from blocklearning.contract import Contract
+from blocklearning.pedersen import Pedersen
 import os
 import logging
 import utilities
@@ -60,10 +61,12 @@ def run_all_trainers(trainers):
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--abi', default='../../build/contracts/Different.json', help='contract abi file')
+@click.option('--pedersen_abi', default='../../build/contracts/PedersenContract.json', help='pedersen contract abi file')
 @click.option('--contract_address', required=True, help='contract address')
+@click.option('--pedersen_address', required=True, help='pedersen contract address')
 
 
-def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir, provider, abi, contract_address):
+def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir, provider, abi, pedersen_abi, contract_address, pedersen_address):
     account_address, account_password = get_account_by_role_by_index(data_dir, 'owner', 0)
     contract = Contract(log, provider, abi, account_address, account_password, contract_address)
 
@@ -88,12 +91,13 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     for i in range(5):
         account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', i)
         local_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
+        pedersen_contract = Pedersen(log, provider, pedersen_abi, account_address, account_password, pedersen_address)
         local_contracts.append(local_contract)
         local_model = tf.keras.models.clone_model(model)
         train_ds = tf.data.experimental.load(train_data_path.format(i))
         test_ds = tf.data.experimental.load(test_data_path.format(i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
-        trainer = PeerAggregatingTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, 
+        trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
                                         train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator)
         trainers.append(trainer)
 

@@ -160,13 +160,13 @@ contract Different {
 
     function validatePedersen(
         uint256 r,
-        uint256 v,
         string memory hiddenWeights
     ) public {
         require(roundPhase == RoundPhase.WaitingForProofPresentment, "NWFPP");
         require(round == 1 && updatesSubmitted[round][msg.sender] == true, "AS");
 
         PedersenContract pedersen = PedersenContract(pedersenAddr);
+        uint256 v = uint256( keccak256(abi.encodePacked(hiddenWeights)));
         bool valid = pedersen.verify(r, v, updates[round][msg.sender].firstCommit, updates[round][msg.sender].secondCommit);
 
         if(valid == true) {

@@ -4,20 +4,22 @@ from .base_trainer import BaseTrainer
 from ..utilities import float_to_int
 from ..training_algos import RegularAlgo
 from blocklearning.contract import RoundPhase
+from random import randint
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=3):
+  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=3):
     self.logger = logger
     self.priv = priv
     self.weights_loader = weights_loader
     self.contract = contract
+    self.pedersen = pedersen
     self.train_ds_batched = train_data
     self.test_ds_batched = test_data
     self.training_algo = RegularAlgo(model, rounds, True)
     self.aggregator = aggregator
     self.__hiddenWeights = ''
-    self.__r = 0
-    self.__v = 0
+    self.__random_T = 0
+    self.commitment = None
     super().__init__()
 
   def __do_first_update(self):
@@ -25,26 +27,24 @@ class PeerAggregatingTrainer(BaseTrainer):
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(acc*100)
-
     weights = self.training_algo.get_weights()
+    self.__random_T = randint(0, 1e+8)
     # load trained model to IPFS and commit to address
     self.__hiddenWeights = self.weights_loader.store(weights)
-    self.__r = 0
-    self.__v = 0
-
+    self.commitment = self.pedersen.get_commitment(self.__random_T, self.__hiddenWeights)
     submission = {
       'trainingAccuracy': trainingAccuracy,
       'testingAccuracy': validationAccuracy,
       'trainingDataPoints': 100,
       'weights': '',
-      'firstCommit': 123,
-      'secondCommit': 456
+      'firstCommit': self.commitment[0],
+      'secondCommit': self.commitment[1]
     }
 
     self.contract.submit_first_update(submission)    
 
   def __do_proof_presentment(self):
-    self.contract.validate_pedersen(self.__r, self.__v, self.__hiddenWeights)
+    self.contract.validate_pedersen(self.__r, self.__hiddenWeights)
 
 
   def train(self):
