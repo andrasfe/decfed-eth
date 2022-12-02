@@ -113,7 +113,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     round = contract.get_round()
 
     if phase == RoundPhase.STOPPED:
-        contract.start_round(all_trainers, all_aggregators, 150)
+        contract.start_round(all_trainers, all_aggregators, 15000)
         round = contract.get_round()
         log.info('starting round {}'.format(round))
 

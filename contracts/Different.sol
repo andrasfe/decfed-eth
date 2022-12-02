@@ -76,6 +76,7 @@ function uint2str(uint256 _i)
     mapping(uint256 => address[]) public selectedAggregators; // Round => Aggregators for the round
 
     // Updates Details
+    mapping(uint256 => uint256) initialUpdatesCount; // Round => Submited Updates
     mapping(uint256 => uint256) updatesCount; // Round => Submited Updates
     mapping(uint256 => mapping(address => bool)) updatesSubmitted; // Round => Address => Bool
     mapping(uint256 => mapping(address => Update)) public updates; // Round => Address => Update
@@ -178,9 +179,9 @@ function uint2str(uint256 _i)
 
         updates[round][msg.sender] = submission;
         updatesSubmitted[round][msg.sender] = true;
-        updatesCount[round]++;
+        initialUpdatesCount[round]++;
 
-        if (updatesCount[round] == selectedTrainers[round].length) {
+        if (initialUpdatesCount[round] == selectedTrainers[round].length) {
             roundPhase = RoundPhase.WaitingForProofPresentment;
         }
     }
@@ -197,9 +198,10 @@ function uint2str(uint256 _i)
         bool valid = pedersen.verify(r, v, updates[round][msg.sender].firstCommit, updates[round][msg.sender].secondCommit);
         updatesSubmitted[round][msg.sender] = false;
         require(valid, 'PVF');
-        updatesSubmitted[round][msg.sender] = false;
+        updatesSubmitted[round][msg.sender] = true;
+        updatesCount[round]++;
 
-        if (block.number - startBlock > maxDurationPerCycle  || updatesCount[round] == selectedTrainers[round].length) {
+        if ( /*block.number - startBlock > maxDurationPerCycle  ||*/ updatesCount[round] == selectedTrainers[round].length) {
             roundPhase = RoundPhase.WaitingForUpdates;
         }
 
@@ -219,7 +221,7 @@ function uint2str(uint256 _i)
         }
     }
 
-    function getUpdatesForPriorRound()
+    function getUpdatesForRound(uint256 selectedRound)
         public
         view
         returns (
@@ -228,20 +230,18 @@ function uint2str(uint256 _i)
             Update[] memory
         )
     {
-        require(round == 1, "RGT1");
-
         Update[] memory roundUpdates = new Update[](
-            selectedTrainers[round - 1].length
+            selectedTrainers[selectedRound].length
         );
         address[] memory roundTrainers = new address[](
-            selectedTrainers[round - 1].length
+            selectedTrainers[selectedRound].length
         );
-        for (uint256 i = 0; i < selectedTrainers[round - 1].length; i++) {
-            address trainer = selectedTrainers[round - 1][i];
+        for (uint256 i = 0; i < selectedTrainers[selectedRound].length; i++) {
+            address trainer = selectedTrainers[selectedRound][i];
             roundTrainers[i] = trainer;
-            roundUpdates[i] = updates[round - 1][trainer];
+            roundUpdates[i] = updates[selectedRound][trainer];
         }
-        return (round, roundTrainers, roundUpdates);
+        return (selectedRound, roundTrainers, roundUpdates);
     }
 
     function getUpdatesForAggregation()

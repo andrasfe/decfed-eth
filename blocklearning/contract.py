@@ -55,8 +55,8 @@ class Contract(BaseContract):
     [round, trainers, submissions] = self.contract.functions.getUpdatesForAggregation().call(self.default_opts)
     return (round, trainers, submissions)
 
-  def get_submissions_from_prior_round(self):
-    [round, trainers, submissions] = self.contract.functions.getUpdatesForPriorRound().call(self.default_opts)
+  def get_submissions_for_round(self, selectedRound):
+    [round, trainers, submissions] = self.contract.functions.getUpdatesForRound(selectedRound).call(self.default_opts)
     return (round, trainers, submissions)
 
 

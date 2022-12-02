@@ -62,7 +62,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
       self.__do_proof_presentment()
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
-      (_, trainers, submissions) = self.contract.get_submissions_from_prior_round()
+      (_, trainers, submissions) = self.contract.get_submissions_for_round(round)
       self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
       history = self.training_algo.fit(self.train_ds_batched)
