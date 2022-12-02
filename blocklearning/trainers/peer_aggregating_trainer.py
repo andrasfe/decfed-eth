@@ -44,7 +44,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.contract.submit_first_update(submission)    
 
   def __do_proof_presentment(self):
-    self.contract.validate_pedersen(self.__r, self.__hiddenWeights)
+    self.contract.validate_pedersen(self.__random_T, self.__hiddenWeights)
 
 
   def train(self):

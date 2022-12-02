@@ -9,6 +9,4 @@ class Pedersen(BaseContract):
     super().__init__(log, provider, abi_file, account, passphrase, contract_address)
 
   def get_commitment(self, random_t, value):
-    abiEncoded = eth_abi.encode_abi(['string'], [value])
-    hash = Web3.solidityKeccak(abiEncoded)
-    return self.contract.functions.commit(random_t, hash).call(self.default_opts)
+    return self.contract.functions.strCommit(random_t, value).call(self.default_opts)

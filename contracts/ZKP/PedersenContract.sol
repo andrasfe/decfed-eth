@@ -76,6 +76,15 @@ contract PedersenContract is EllipticCurveInterface {
         ( _x3 , _y3 ) = eAdd( _x1 , _y1 , _x2 , _y2 );
     }
 
+    function strCommit(uint256 _r, string memory _s)
+        public
+        view
+        returns ( uint256 _x3 , uint256 _y3 )
+    {
+        uint256 _v = uint256( keccak256(abi.encodePacked(_s))); 
+        return this.commit(_r, _v);       
+    }
+
     function verify( uint256 _r , uint256 _v , uint256 _x1 , uint256 _y1 )
         public
         view

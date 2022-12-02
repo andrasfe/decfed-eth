@@ -90,9 +90,9 @@ class Contract(BaseContract):
     tx = self.contract.functions.submitFirstUpdate(submission).transact(self.default_opts)
     return tx, self._wait_tx(tx)
 
-  def validate_pedersen(self, random_t, ipfs_address, hiddenWeights):
+  def validate_pedersen(self, random_t, hiddenWeights):
     self._unlock_account()
-    tx = self.contract.functions.validatePedersen(random_t, ipfs_address, hiddenWeights).transact(self.default_opts)
+    tx = self.contract.functions.validatePedersen(random_t, hiddenWeights).transact(self.default_opts)
     return tx, self._wait_tx(tx)
 
 

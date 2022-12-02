@@ -27,6 +27,33 @@ contract Different {
         WaitingForProofPresentment
     }
 
+function uint2str(uint256 _i)
+  internal
+  pure
+  returns (string memory str)
+{
+  if (_i == 0)
+  {
+    return "0";
+  }
+  uint256 j = _i;
+  uint256 length;
+  while (j != 0)
+  {
+    length++;
+    j /= 10;
+  }
+  bytes memory bstr = new bytes(length);
+  uint256 k = length;
+  j = _i;
+  while (j != 0)
+  {
+    bstr[--k] = bytes1(uint8(48 + j % 10));
+    j /= 10;
+  }
+  str = string(bstr);
+}
+
     // Initialization Details
     address public owner;
     address public pedersenAddr;
@@ -168,14 +195,9 @@ contract Different {
         PedersenContract pedersen = PedersenContract(pedersenAddr);
         uint256 v = uint256( keccak256(abi.encodePacked(hiddenWeights)));
         bool valid = pedersen.verify(r, v, updates[round][msg.sender].firstCommit, updates[round][msg.sender].secondCommit);
-
-        if(valid == true) {
-            updates[round][msg.sender].weights = hiddenWeights;
-        }
-        else {
-            delete updates[round][msg.sender];
-            updatesSubmitted[round][msg.sender] = true;
-        }
+        updatesSubmitted[round][msg.sender] = false;
+        require(valid, 'PVF');
+        updatesSubmitted[round][msg.sender] = false;
 
         if (block.number - startBlock > maxDurationPerCycle  || updatesCount[round] == selectedTrainers[round].length) {
             roundPhase = RoundPhase.WaitingForUpdates;
@@ -206,7 +228,7 @@ contract Different {
             Update[] memory
         )
     {
-        require(round > 1, "NGT1");
+        require(round == 1, "RGT1");
 
         Update[] memory roundUpdates = new Update[](
             selectedTrainers[round - 1].length
