@@ -21,7 +21,7 @@ def sum_scaled_weights(scaled_weight_list):
         
     return avg_grad
 
-def weighted_fed_avg(submissions, model_size, weights_loader, avg_weights):
+def weighted_fed_avg(submissions, weights_loader):
   scaled_local_weight_list = []
   scaling_factor = 1/len(submissions)
 

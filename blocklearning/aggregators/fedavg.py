@@ -6,5 +6,4 @@ class FedAvgAggregator():
     self.weights_loader = weights_loader
 
   def aggregate(self, trainers, submissions, scorers = None, scores = None):
-    samples = [samples for (_, _, samples, _) in submissions]
-    return weighted_fed_avg(submissions, self.model_size, self.weights_loader, samples)
+    return weighted_fed_avg(submissions, self.weights_loader)

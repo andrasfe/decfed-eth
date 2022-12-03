@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 // ZKP package used as-is from: https://github.com/18dew/solGrined
-import './ZKP/PedersenContract.sol';
+import "./ZKP/PedersenContract.sol";
 
 contract Different {
     struct Update {
@@ -27,38 +27,31 @@ contract Different {
         WaitingForProofPresentment
     }
 
-function uint2str(uint256 _i)
-  internal
-  pure
-  returns (string memory str)
-{
-  if (_i == 0)
-  {
-    return "0";
-  }
-  uint256 j = _i;
-  uint256 length;
-  while (j != 0)
-  {
-    length++;
-    j /= 10;
-  }
-  bytes memory bstr = new bytes(length);
-  uint256 k = length;
-  j = _i;
-  while (j != 0)
-  {
-    bstr[--k] = bytes1(uint8(48 + j % 10));
-    j /= 10;
-  }
-  str = string(bstr);
-}
+    function uint2str(uint256 _i) internal pure returns (string memory str) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        j = _i;
+        while (j != 0) {
+            bstr[--k] = bytes1(uint8(48 + (j % 10)));
+            j /= 10;
+        }
+        str = string(bstr);
+    }
 
     // Initialization Details
     address public owner;
     address public pedersenAddr;
-    uint public startBlock;
-    uint public maxDurationPerCycle;
+    uint256 public startBlock;
+    uint256 public maxDurationPerCycle;
     string public model; // IPFS CID for model encoded as h5.
     RoundPhase afterUpdate; // Which phase is executed after WaitingForUpdates.
 
@@ -87,7 +80,11 @@ function uint2str(uint256 _i)
     mapping(uint256 => mapping(address => string)) public aggregations; // Round => Address => Weights ID
     mapping(uint256 => mapping(string => uint256)) aggregationsResultsCount; // Round => Weights ID => Count
 
-    constructor(address pedAddr, string memory _model, string memory _weights) {
+    constructor(
+        address pedAddr,
+        string memory _model,
+        string memory _weights
+    ) {
         owner = msg.sender;
         pedersenAddr = pedAddr;
         model = _model;
@@ -97,7 +94,7 @@ function uint2str(uint256 _i)
     function startRound(
         address[] memory roundTrainers,
         address[] memory roundAggregators,
-        uint timeDelta
+        uint256 timeDelta
     ) public {
         require(msg.sender == owner, "NOWN");
         require(roundPhase == RoundPhase.Stopped, "NS");
@@ -113,7 +110,12 @@ function uint2str(uint256 _i)
         maxDurationPerCycle = timeDelta;
         selectedTrainers[round] = roundTrainers;
         selectedAggregators[round] = roundAggregators;
-        roundPhase = RoundPhase.WaitingForFirstUpdate;
+        if(round == 1) {
+            roundPhase = RoundPhase.WaitingForFirstUpdate;
+        }
+        else {
+            roundPhase = RoundPhase.WaitingForUpdates;
+        }
     }
 
     function registerAggregator() public {
@@ -178,7 +180,6 @@ function uint2str(uint256 _i)
         require(isSelectedTrainer(), "TNP");
 
         updates[round][msg.sender] = submission;
-        updatesSubmitted[round][msg.sender] = true;
         initialUpdatesCount[round]++;
 
         if (initialUpdatesCount[round] == selectedTrainers[round].length) {
@@ -186,25 +187,29 @@ function uint2str(uint256 _i)
         }
     }
 
-    function validatePedersen(
-        uint256 r,
-        string memory hiddenWeights
-    ) public {
+    function validatePedersen(uint256 r, string memory hiddenWeights) public {
         require(roundPhase == RoundPhase.WaitingForProofPresentment, "NWFPP");
-        require(round == 1 && updatesSubmitted[round][msg.sender] == true, "AS");
+        require(round == 1, "AS");
 
         PedersenContract pedersen = PedersenContract(pedersenAddr);
-        uint256 v = uint256( keccak256(abi.encodePacked(hiddenWeights)));
-        bool valid = pedersen.verify(r, v, updates[round][msg.sender].firstCommit, updates[round][msg.sender].secondCommit);
-        updatesSubmitted[round][msg.sender] = false;
-        require(valid, 'PVF');
+        uint256 v = uint256(keccak256(abi.encodePacked(hiddenWeights)));
+        bool valid = pedersen.verify(
+            r,
+            v,
+            updates[round][msg.sender].firstCommit,
+            updates[round][msg.sender].secondCommit
+        );
+        require(valid, "PVF");
+        updates[round][msg.sender].weights = hiddenWeights;
         updatesSubmitted[round][msg.sender] = true;
         updatesCount[round]++;
 
-        if ( /*block.number - startBlock > maxDurationPerCycle  ||*/ updatesCount[round] == selectedTrainers[round].length) {
-            roundPhase = RoundPhase.WaitingForUpdates;
+        if (
+            /*block.number - startBlock > maxDurationPerCycle  ||*/
+            updatesCount[round] == selectedTrainers[round].length
+        ) {
+            roundPhase = RoundPhase.WaitingForTermination;
         }
-
     }
 
     function submitUpdate(Update memory submission) public virtual {
@@ -217,7 +222,7 @@ function uint2str(uint256 _i)
         updatesCount[round]++;
 
         if (updatesCount[round] == selectedTrainers[round].length) {
-            roundPhase = afterUpdate;
+            roundPhase = RoundPhase.WaitingForAggregations;
         }
     }
 
@@ -292,24 +297,29 @@ function uint2str(uint256 _i)
     function terminateRound() public {
         require(roundPhase == RoundPhase.WaitingForTermination, "NWFT");
 
-        uint256 minQuorum = (selectedAggregators[round].length * 50) / 100 + 1;
-        uint256 count;
-        string memory roundWeights;
+        if (round > 1) {
+            uint256 minQuorum = (selectedAggregators[round].length * 50) /
+                100 +
+                1;
+            uint256 count;
+            string memory roundWeights;
 
-        for (uint256 i = 0; i < selectedAggregators[round].length; i++) {
-            address aggregator = selectedAggregators[round][i];
-            string memory w = aggregations[round][aggregator];
-            uint256 c = aggregationsResultsCount[round][w];
-            if (c >= minQuorum) {
-                if (c > count) {
-                    roundWeights = w;
-                    count = c;
+            for (uint256 i = 0; i < selectedAggregators[round].length; i++) {
+                address aggregator = selectedAggregators[round][i];
+                string memory w = aggregations[round][aggregator];
+                uint256 c = aggregationsResultsCount[round][w];
+                if (c >= minQuorum) {
+                    if (c > count) {
+                        roundWeights = w;
+                        count = c;
+                    }
                 }
             }
+
+            require(count != 0, "CNT");
+            weights[round] = roundWeights;
         }
 
-        require(count != 0, "CNT");
-        weights[round] = roundWeights;
         roundPhase = RoundPhase.Stopped;
     }
 }
