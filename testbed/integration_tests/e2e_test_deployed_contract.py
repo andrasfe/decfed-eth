@@ -9,6 +9,7 @@ from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
 from blocklearning.aggregators import FedAvgAggregator, BasilAggregator
 from blocklearning.contract import RoundPhase
+from blocklearning.diffpriv import Gaussian
 import click
 import tensorflow as tf
 from blocklearning.contract import Contract
@@ -85,6 +86,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     model.set_weights(weights)
     aggregator = FedAvgAggregator(-1, weights_loader)
     basil_aggregator = BasilAggregator(weights_loader)
+    priv = Gaussian()
 
     trainers = []
     local_contracts = []
@@ -98,7 +100,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
         test_ds = tf.data.experimental.load(test_data_path.format(i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
         trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
-                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator)
+                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=priv)
         trainers.append(trainer)
 
 

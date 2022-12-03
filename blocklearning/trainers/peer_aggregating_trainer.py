@@ -27,7 +27,14 @@ class PeerAggregatingTrainer(BaseTrainer):
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(acc*100)
-    weights = self.training_algo.get_weights()
+
+    weights = None
+    
+    if self.priv is None:
+      weights = self.training_algo.get_weights()
+    else:
+      weights = self.priv.privatized_weights(self.training_algo.get_model())
+
     self.__random_T = randint(0, 1e+8)
     # load trained model to IPFS and commit to address
     self.__hiddenWeights = self.weights_loader.store(weights)
@@ -74,9 +81,12 @@ class PeerAggregatingTrainer(BaseTrainer):
       trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
       validationAccuracy = float_to_int(acc*100)
 
-      weights = self.training_algo.get_weights()
-      if self.priv is not None:
-        weights = self.priv.privatize(weights, validationAccuracy)
+      weights = None
+
+      if self.priv is None:
+        weights = self.training_algo.get_weights()
+      else:
+        weights = self.priv.privatized_weights(self.training_algo.get_model())
 
       weights_id = self.weights_loader.store(weights)
 
