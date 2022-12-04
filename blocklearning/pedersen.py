@@ -10,3 +10,6 @@ class Pedersen(BaseContract):
 
   def get_commitment(self, random_t, value):
     return self.contract.functions.strCommit(random_t, value).call(self.default_opts)
+
+  def verify(self, random_t, value, commitment):
+    return self.contract.functions.strVerify(random_t, value, commitment[0], commitment[1]).call(self.default_opts)

@@ -94,7 +94,20 @@ contract PedersenContract is EllipticCurveInterface {
         if ( (_x1 == _x2) && ( _y1 == _y2 ) ){
             result = true;
         }
+        else {
+            result = false;
+        }
     }
+
+    function strVerify( uint256 _r , string memory _s , uint256 _x1 , uint256 _y1 )
+        public
+        view
+        returns ( bool result )
+    {
+        uint256 _v = uint256( keccak256(abi.encodePacked(_s))); 
+        return this.verify(_r, _v, _x1, _y1);
+    }
+
 
     function addCommitment( uint256 _r1 ,uint256 _x1 , uint256 _y1 ,  uint256 _r2 , uint256 _x2 , uint256 _y2 )
         public

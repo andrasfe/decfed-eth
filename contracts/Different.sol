@@ -192,10 +192,9 @@ contract Different {
         require(round == 1, "AS");
 
         PedersenContract pedersen = PedersenContract(pedersenAddr);
-        uint256 v = uint256(keccak256(abi.encodePacked(hiddenWeights)));
-        bool valid = pedersen.verify(
+        bool valid = pedersen.strVerify(
             r,
-            v,
+            hiddenWeights,
             updates[round][msg.sender].firstCommit,
             updates[round][msg.sender].secondCommit
         );
