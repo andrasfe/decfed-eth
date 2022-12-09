@@ -11,7 +11,7 @@ class RegularAlgo(BaseAlgo):
         lr = 0.01 
         loss='categorical_crossentropy'
         metrics = ['accuracy']
-        optimizer = SGD(lr=lr, 
+        optimizer = SGD(learning_rate=lr, 
                         decay=lr / self.epochs, 
                         momentum=0.9
                         )          
