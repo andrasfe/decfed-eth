@@ -14,8 +14,18 @@ layer_map = {
 
 class Testing(unittest.TestCase):
     def test_prioritizer(self):
-        prioritizer = Prioritizer(.05)
-        out = prioritizer.select_weights(my_layer, layer_map)
+        prioritizer = Prioritizer(my_weights=my_layer, alpha=.63)
+        
+        for i in range(100):
+            print(i, prioritizer.get_parms(i/100))
+
+        sorted_distance_map = prioritizer.get_sorted_distance_map(layer_map)
+        print(sorted_distance_map)
+
+        out = prioritizer.group_weights_by_dist(sorted_distance_map)
+
+        prioritized = prioritizer.get_prioritized_weights(layer_map)
+        print(prioritized)
 
 
 if __name__ == '__main__':

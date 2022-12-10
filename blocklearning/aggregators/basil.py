@@ -4,6 +4,7 @@ import tensorflow as tf
 import math
 import copy
 from sklearn.metrics import f1_score
+from .prioritizer import Prioritizer
 
 class BasilAggregator():
     def __init__(self, weights_loader):
@@ -61,8 +62,9 @@ class BasilAggregator():
         return my_new_layer
 
     def aggregate(self, my_model, submissions, data_tf):
-        my_f1, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
+        _, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
         my_last_dense_layer = self.__get_last_dense_layer_weights(my_model)
+        prioritizer = Prioritizer(my_last_dense_layer, .63)
 
         weight_list = []
         last_dense_layer_list = []
@@ -79,6 +81,12 @@ class BasilAggregator():
             weight_list.append(weights)
             model.set_weights(weights)
             last_dense_layer_list.append(self.__get_last_dense_layer_weights(model))
+
+        last_dense_layer_map = {k:last_dense_layer_list[k] for k in range(len(last_dense_layer_list))}
+        prioritized_map = prioritizer.get_prioritized_weights(last_dense_layer_map)
+        
+        for key in prioritized_map.keys():
+            model.set_weights(weights[key])
             f1 = self.__calc_F1(data_tf, model)
             f1_list.append(f1)
             fa, fo, fo_columns = self.__compute_fa_fo_wg(my_detailed_f1, f1[1], fi=15, mu=0.9, omega_fa1=1.0, omega_fa2=0.0001, omega_fo1=0.99, omega_fo2=0.0001)
@@ -86,7 +94,7 @@ class BasilAggregator():
             fo_wg_list.append(fo)
             fo_columns_list.append(fo_columns)
 
-        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, last_dense_layer_list, fa_wg_list, fo_columns_list)
+        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, list(prioritized_map.values()), fa_wg_list, fo_columns_list)
         my_model.layers[-2].set_weights(my_new_last_dense_layer)
 
         return my_model
