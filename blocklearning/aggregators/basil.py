@@ -20,7 +20,12 @@ class BasilAggregator():
         return f1, detailed_f1
 
     def __get_last_dense_layer_weights(self, model):
-        return model.layers[-2].get_weights()
+        return model.layers[-2].get_weights()[1]
+
+    def __set_last_dense_layer_weights(self, model, last_dense_output):
+        last_dense_weights = model.layers[-2].get_weights()
+        last_dense_weights[1] = last_dense_output
+        model.layers[-2].set_weights(last_dense_weights)
 
     def __weight_sigmoid(self, omega1, omega2, disc, certainty):
         return max(0, omega1/(1 + math.exp(-disc/100)) - omega2)*certainty
@@ -50,14 +55,14 @@ class BasilAggregator():
 
     def __layers_weighted_average(self, my_layer, layer_list, fa_wg_list, fo_columns_list):
         my_new_layer = copy.deepcopy(my_layer)
-        total_weights = [1]*len(my_layer[1])
+        total_weights = [1]*len(my_layer)
         for i in range(len(layer_list)):
-            for c in range(len(my_layer[1])):
-                my_new_layer[1][c] = my_layer[1][c] + layer_list[i][1][c]*fa_wg_list[i][c]
+            for c in range(len(my_layer)):
+                my_new_layer[c] = my_layer[c] + layer_list[i][c]*fa_wg_list[i][c]
                 total_weights[c] += fa_wg_list[i][c]
                 
         for c in range(len(my_layer)):
-            my_new_layer[1][c] = my_new_layer[1][c]/total_weights[c]
+            my_new_layer[c] = my_new_layer[c]/total_weights[c]
         
         return my_new_layer
 
@@ -85,16 +90,18 @@ class BasilAggregator():
         last_dense_layer_map = {k:last_dense_layer_list[k] for k in range(len(last_dense_layer_list))}
         prioritized_map = prioritizer.get_prioritized_weights(last_dense_layer_map)
         
+        prioritized_last_dense_list = []
         for key in prioritized_map.keys():
-            model.set_weights(weights[key])
+            model.set_weights(weight_list[key])
             f1 = self.__calc_F1(data_tf, model)
             f1_list.append(f1)
             fa, fo, fo_columns = self.__compute_fa_fo_wg(my_detailed_f1, f1[1], fi=15, mu=0.9, omega_fa1=1.0, omega_fa2=0.0001, omega_fo1=0.99, omega_fo2=0.0001)
             fa_wg_list.append(fa)
             fo_wg_list.append(fo)
             fo_columns_list.append(fo_columns)
+            prioritized_last_dense_list.append(last_dense_layer_list[key])
 
-        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, list(prioritized_map.values()), fa_wg_list, fo_columns_list)
-        my_model.layers[-2].set_weights(my_new_last_dense_layer)
+        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, prioritized_last_dense_list, fa_wg_list, fo_columns_list)
+        self.__set_last_dense_layer_weights(my_model, my_new_last_dense_layer)
 
         return my_model
