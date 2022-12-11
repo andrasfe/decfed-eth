@@ -43,6 +43,9 @@ class Contract(BaseContract):
   def get_scorers(self):
     return self.contract.functions.getScorers().call(self.default_opts)
 
+  def get_weights_for_round(self, selectedRound):
+    return self.contract.functions.getWeightsForRound(selectedRound).call(self.default_opts)
+
   def get_training_round(self):
     [round, weights_cid] = self.contract.functions.getRoundForTraining().call(self.default_opts)
     return (round, weights_cid)

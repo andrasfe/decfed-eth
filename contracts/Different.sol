@@ -174,6 +174,16 @@ contract Different {
         return (round, weights[round - 1]);
     }
 
+    function getWeightsForRound(uint256 selectedRound)
+        public
+        view
+        virtual
+        returns (string memory)
+    {
+        return (weights[selectedRound - 1]);
+    }
+
+
     function submitFirstUpdate(Update memory submission) public virtual {
         require(roundPhase == RoundPhase.WaitingForFirstUpdate, "NWFFS");
         require(updatesSubmitted[round][msg.sender] == false, "AS");

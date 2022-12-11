@@ -100,7 +100,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
         test_ds = tf.data.experimental.load(test_data_path.format(i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
         trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
-                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=priv)
+                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None)
         trainers.append(trainer)
 
 
@@ -145,4 +145,14 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
         log.info('terminated round {}'.format(round))
 
     log.info('current state {}'.format(phase))
+
+    (_, trainers, submissions) = contract.get_submissions_for_round(round)
+
+    for submission in submissions:
+        print(submission[0], submission[1])
+
+    cid = contract.get_weights_for_round(round)
+    global_weights = weights_loader.load(cid)
+    model.set_weights(global_weights)
+    
 main()

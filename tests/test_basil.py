@@ -1,8 +1,8 @@
 from blocklearning.aggregators import BasilAggregator
-from blocklearning.weights_loaders import IpfsWeightsLoader
 import tensorflow as tf
 import unittest
 import pickle
+from sklearn.metrics import f1_score
 
 submissions = [(97343748807907098624, 99642857142857138176, 100, 
     'QmdBSQrjacTAQeQ1DoT3Yz2DyJgr9DB8odGroMkx4MEjXn', 13941463177824009744775924363945039550267837549997785618729079601690940308853, 60745476210894129251440937083306136362089371153726980127651439742728162462717), (92544645071029665792, 97857142857142845440, 100, 
@@ -48,6 +48,13 @@ class Testing(unittest.TestCase):
         basil_aggregator = BasilAggregator(weights_loader)
         my_new_model = basil_aggregator.aggregate(model, submissions, data_tf)
         self.assertIsNotNone(my_new_model)
+
+        # validate that the new model is actually working
+        x, y = tuple(zip(*data_tf))
+        logits = model.predict(x[1])
+        detailed_f1 = f1_score(tf.argmax(logits, axis=1), tf.argmax(y[1], axis=1), average=None, labels=[0,1,2,3,4,5,6,7,8,9], zero_division=1)
+        print(detailed_f1)
+
 
 if __name__ == '__main__':
     unittest.main()
