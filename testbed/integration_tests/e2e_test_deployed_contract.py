@@ -1,5 +1,6 @@
 import os
 import sys
+import pickle
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -55,10 +56,10 @@ def run_all_trainers(trainers):
 
 @click.command()
 @click.option('--ipfs_api', default=None, help='api uri or None')
-@click.option('--cid', default='QmfGcAp7mfxzrxSNNZmmtvpPAwToZ4Bbjz38v8ivKneLSb', help='api uri or None')
+@click.option('--cid', default='', help='api uri or None')
 @click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
-@click.option('--train_data_path', default='../datasets/mnist/5/train/{}.tfrecord', help='location of client data (tfrecs)')
-@click.option('--test_data_path', default='../datasets/mnist/5/test/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--train_data_path', default='../datasets/mnist/20/train/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--test_data_path', default='../datasets/mnist/20/test/{}.tfrecord', help='location of client data (tfrecs)')
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--abi', default='../../build/contracts/Different.json', help='contract abi file')
@@ -74,8 +75,10 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
 
     if cid == '':
-        cid = weights_loader.store(weights_path)
-        print('weights cid', cid)
+        with open(weights_path, 'rb') as fp:
+            weights = pickle.load(fp)
+            cid = weights_loader.store(weights)
+            print('weights cid', cid)
 
     weights = weights_loader.load(cid)
 
@@ -90,7 +93,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
 
     trainers = []
     local_contracts = []
-    for i in range(5):
+    for i in range(20):
         account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', i)
         local_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
         pedersen_contract = Pedersen(log, provider, pedersen_abi, account_address, account_password, pedersen_address)
@@ -149,7 +152,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     (_, trainers, submissions) = contract.get_submissions_for_round(round)
 
     for submission in submissions:
-        print(submission[0], submission[1])
+        print('Submission', submission[0], submission[1])
 
     cid = contract.get_weights_for_round(round)
     global_weights = weights_loader.load(cid)

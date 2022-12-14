@@ -49,6 +49,7 @@ class Prioritizer():
         qual_hi = self.select_qualified(weight_groups[2], self.fh)
         qual_lo.update(qual_mid)
         qual_lo.update(qual_hi)
+        print('filtered out', len(qual_lo), ' from ', len(weights))
         return qual_lo
 
 

@@ -30,27 +30,29 @@ class BasilAggregator():
     def __weight_sigmoid(self, omega1, omega2, disc, certainty):
         return max(0, omega1/(1 + math.exp(-disc/100)) - omega2)*certainty
 
-    def __compute_fa_fo_wg(self, my_detailed_f1, detailed_f1, fi=10, mu=0.9, omega_fa1=0.99, omega_fa2=0.1, omega_fo1=0.5, omega_fo2=0.5):
-        disc = [0]*len(my_detailed_f1)
-        fa_wg = [0]*len(my_detailed_f1)
-        fo_columns = [0]*len(my_detailed_f1)
-        
-        best = sorted(detailed_f1, reverse=True)[:fi]
-        certainty = max(sum(best)/len(best) - stdev(best), 0) if len(best) > 0 else 0
-                
-        for c in range(len(my_detailed_f1)):
-            if detailed_f1[c] > 0 and my_detailed_f1[c] == 0:
-                fo_columns[c] == 1
-                
-            weighed_diff = (detailed_f1[c] - my_detailed_f1[c])*mu
-            if detailed_f1[c] > my_detailed_f1[c]:
-                disc[c] = weighed_diff**(3 + my_detailed_f1[c])
-            else:
-                disc[c] = -math.inf #-1*pow(weighed_diff, 4 + int(my_detailed_f1[c]))
+    def __compute_fa_fo_wg(self, my_detailed_f1, detailed_f1_list, fi=5, mu=0.9, omega_fa1=0.99, omega_fa2=0.1, omega_fo1=0.5, omega_fo2=0.5):
+        disc = [[0 for _ in range(len(my_detailed_f1))] for _ in range(len(detailed_f1_list))]
+        fa_wg = disc.copy()        
+        fo_columns = disc.copy()
+        fo_wg = [0]*len(my_detailed_f1)
 
-            fa_wg[c] = self.__weight_sigmoid(omega_fa1, omega_fa2, disc[c], certainty)  
+        for m in range(len(detailed_f1_list)):
+            best = sorted(detailed_f1_list[m], reverse=True)[:fi]
+            certainty = max(sum(best)/len(best) - stdev(best), 0)
+                    
+            for c in range(len(my_detailed_f1)):
+                if detailed_f1_list[m][c] > 0 and my_detailed_f1[c] == 0:
+                    fo_columns[m][c] == 1
+                    
+                weighed_diff = (detailed_f1_list[m][c] - my_detailed_f1[c])*mu
+                if detailed_f1_list[m][c] > my_detailed_f1[c]:
+                    disc[m][c] = weighed_diff**(3 + my_detailed_f1[c])
+                else:
+                    disc[m][c] = -math.inf #-1*pow(weighed_diff, 4 + int(my_detailed_f1[c]))
 
-        fo_wg = self.__weight_sigmoid(omega_fo1, omega_fo2, sum(disc), certainty)
+                fa_wg[m][c] = self.__weight_sigmoid(omega_fa1, omega_fa2, disc[m][c], certainty)  
+
+        fo_wg[m] = self.__weight_sigmoid(omega_fo1, omega_fo2, sum(disc[m]), certainty)
         return fa_wg, fo_wg, fo_columns
 
     def __layers_weighted_average(self, my_layer, layer_list, fa_wg_list, fo_columns_list):
@@ -74,9 +76,6 @@ class BasilAggregator():
         weight_list = []
         last_dense_layer_list = []
         f1_list = []
-        fa_wg_list = []
-        fo_wg_list = []
-        fo_columns_list = []
 
         model = SimpleMLP.build(784, 10)
 
@@ -93,15 +92,12 @@ class BasilAggregator():
         prioritized_last_dense_list = []
         for key in prioritized_map.keys():
             model.set_weights(weight_list[key])
-            f1 = self.__calc_F1(data_tf, model)
+            _, f1 = self.__calc_F1(data_tf, model)
             f1_list.append(f1)
-            fa, fo, fo_columns = self.__compute_fa_fo_wg(my_detailed_f1, f1[1], fi=15, mu=0.9, omega_fa1=1.0, omega_fa2=0.0001, omega_fo1=0.99, omega_fo2=0.0001)
-            fa_wg_list.append(fa)
-            fo_wg_list.append(fo)
-            fo_columns_list.append(fo_columns)
             prioritized_last_dense_list.append(last_dense_layer_list[key])
 
-        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, prioritized_last_dense_list, fa_wg_list, fo_columns_list)
+        fa, fo, fo_columns = self.__compute_fa_fo_wg(my_detailed_f1, f1_list, fi=15, mu=0.9, omega_fa1=1.0, omega_fa2=0.0001, omega_fo1=0.99, omega_fo2=0.0001)
+        my_new_last_dense_layer = self.__layers_weighted_average(my_last_dense_layer, prioritized_last_dense_list, fa, fo_columns)
         self.__set_last_dense_layer_weights(my_model, my_new_last_dense_layer)
 
         return my_model
