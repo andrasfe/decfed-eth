@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import tensorflow as tf
 from imutils import paths
+import random
 import click
 
 def load(paths, verbose=-1):
@@ -27,7 +28,7 @@ def load(paths, verbose=-1):
             print("[INFO] processed {}/{}".format(i + 1, len(paths)))
     return data, labels
 
-def batch_data(data_shard, bs=32):
+def batch_data(data_shard, bs=5):
     '''Takes in a clients data shard and create a tfds object off it
     args:
         shard: a data, label constituting a client's data shard
@@ -45,7 +46,7 @@ def batch_data(data_shard, bs=32):
     test_dataset = tf.data.Dataset.from_tensor_slices((list(X_data_test), list(y_data_test)))
     return (train_dataset.shuffle(len(y_data_train)).batch(bs), test_dataset.batch(bs))
 
-def create_clients(image_list, label_list, num_clients=5):
+def create_clients(image_list, label_list, num_clients=10):
     ''' return: a dictionary with keys clients' names and value as 
                 data shards - tuple of images and label lists.
         args: 
@@ -60,8 +61,8 @@ def create_clients(image_list, label_list, num_clients=5):
     client_names = ['{}'.format(i) for i in range(num_clients)]
 
     #randomize the data
-    # data = list(zip(image_list, label_list))
-    # random.shuffle(data)  # <- IID
+    data = list(zip(image_list, label_list))
+    random.shuffle(data)  # <- IID
     
     # sort data for non-iid
     max_y = np.argmax(label_list, axis=-1)
@@ -69,16 +70,27 @@ def create_clients(image_list, label_list, num_clients=5):
     data = [(x,y) for _,y,x in sorted_zip]
 
     #shard data and place at each client
-    size = len(data)//num_clients
-    shards = [data[i:i + size] for i in range(0, size*num_clients, size)]
+    # size = len(data)//num_clients
+    # shards = [data[i:i + size] for i in range(0, size*num_clients, size)]
+
+    shards = []
+    vals = np.random.default_rng().dirichlet(np.ones(num_clients), size=1)
+    k_nums = [round(v) for v in vals[0]*len(data)]
+    offset = 0
+
+    for i in range(num_clients):
+        end = len(data) if i == num_clients - 1 else offset + k_nums[i]
+        shards.append(data[offset : end])
+        offset = end + 1
 
     #number of clients must equal number of shards
     assert(len(shards) == len(client_names))
+    assert(sum([len(shard) for shard in shards]) <= len(data))
 
     return {client_names[i] : shards[i] for i in range(len(client_names))} 
 
 @click.command()
-@click.option('--no_trainers', default='5', help='number of clients')
+@click.option('--no_trainers', default='10', help='number of clients')
 @click.option('--data_path', default='./datasets', help='location of training data')
 @click.option('--img_path', default='./datasets/trainingSet', help='location of images')
 def main(no_trainers, data_path, img_path):

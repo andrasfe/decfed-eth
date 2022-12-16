@@ -30,7 +30,7 @@ class BasilAggregator():
     def __weight_sigmoid(self, omega1, omega2, disc, certainty):
         return max(0, omega1/(1 + math.exp(-disc/100)) - omega2)*certainty
 
-    def __compute_fa_fo_wg(self, my_detailed_f1, detailed_f1_list, fi=5, mu=0.9, omega_fa1=0.99, omega_fa2=0.1, omega_fo1=0.5, omega_fo2=0.5):
+    def __compute_fa_fo_wg(self, my_detailed_f1, detailed_f1_list, fi=3, mu=10, omega_fa1=10, omega_fa2=4, omega_fo1=10, omega_fo2=4, kappa=10):
         disc = [[0 for _ in range(len(my_detailed_f1))] for _ in range(len(detailed_f1_list))]
         fa_wg = disc.copy()        
         fo_columns = disc.copy()
@@ -71,7 +71,7 @@ class BasilAggregator():
     def aggregate(self, my_model, submissions, data_tf):
         _, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
         my_last_dense_layer = self.__get_last_dense_layer_weights(my_model)
-        prioritizer = Prioritizer(my_last_dense_layer, .63)
+        prioritizer = Prioritizer(my_last_dense_layer, .4)
 
         weight_list = []
         last_dense_layer_list = []

@@ -10,6 +10,7 @@ from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
 from blocklearning.aggregators import FedAvgAggregator, BasilAggregator
 from blocklearning.contract import RoundPhase
+from blocklearning.training_algos import RegularAlgo
 from blocklearning.diffpriv import Gaussian
 import click
 import tensorflow as tf
@@ -58,8 +59,9 @@ def run_all_trainers(trainers):
 @click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='', help='api uri or None')
 @click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
-@click.option('--train_data_path', default='../datasets/mnist/20/train/{}.tfrecord', help='location of client data (tfrecs)')
-@click.option('--test_data_path', default='../datasets/mnist/20/test/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--train_data_path', default='../datasets/mnist/10/train/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--test_data_path', default='../datasets/mnist/10/test/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--owner_data_path', default='../datasets/mnist/10/owner_val.tfrecord', help='location of client data (tfrecs)')
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--abi', default='../../build/contracts/Different.json', help='contract abi file')
@@ -68,7 +70,7 @@ def run_all_trainers(trainers):
 @click.option('--pedersen_address', required=True, help='pedersen contract address')
 
 
-def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir, provider, abi, pedersen_abi, contract_address, pedersen_address):
+def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, owner_data_path, data_dir, provider, abi, pedersen_abi, contract_address, pedersen_address):
     account_address, account_password = get_account_by_role_by_index(data_dir, 'owner', 0)
     contract = Contract(log, provider, abi, account_address, account_password, contract_address)
 
@@ -86,14 +88,14 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     smlp_global = SimpleMLP()
     model = smlp_global.build(build_shape, 10) 
 
-    model.set_weights(weights)
+    # model.set_weights(weights)
     aggregator = FedAvgAggregator(-1, weights_loader)
     basil_aggregator = BasilAggregator(weights_loader)
     priv = Gaussian()
 
     trainers = []
     local_contracts = []
-    for i in range(20):
+    for i in range(10):
         account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', i)
         local_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
         pedersen_contract = Pedersen(log, provider, pedersen_abi, account_address, account_password, pedersen_address)
@@ -152,10 +154,18 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, data_dir,
     (_, trainers, submissions) = contract.get_submissions_for_round(round)
 
     for submission in submissions:
-        print('Submission', submission[0], submission[1])
+        subm_benchmark = '{},{},{}'.format(round, submission[0], submission[1])
+        print(subm_benchmark)
+        log.info(subm_benchmark)
 
-    cid = contract.get_weights_for_round(round)
-    global_weights = weights_loader.load(cid)
-    model.set_weights(global_weights)
+    # cid = contract.get_weights_for_round(round)
+    # global_weights = weights_loader.load(cid)
+    # model.set_weights(global_weights)
+    # test_ds = tf.data.experimental.load(owner_data_path)
+    # algo = RegularAlgo(model, 2, True)
+    # acc, loss = algo.test(test_ds)
+    # benchmarks='{},{},{}'.format(round, acc, loss)
+    # print(benchmarks)
+    # log.info(benchmarks)
     
 main()

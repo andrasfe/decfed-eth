@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 
 class RegularAlgo(BaseAlgo):
 
-    def __init__(self, model, epochs, verbose):
+    def __init__(self, model, epochs=1, verbose=False):
         super().__init__(model, epochs, verbose)
         lr = 0.01 
         loss='categorical_crossentropy'
