@@ -7,7 +7,7 @@ from blocklearning.contract import RoundPhase
 from random import randint
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=1):
+  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=5):
     self.logger = logger
     self.priv = priv
     self.weights_loader = weights_loader
@@ -15,7 +15,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.pedersen = pedersen
     self.train_ds_batched = train_data
     self.test_ds_batched = test_data
-    self.training_algo = RegularAlgo(model, rounds, True)
+    self.training_algo = RegularAlgo(model, rounds, False)
     self.aggregator = aggregator
     self.__hiddenWeights = ''
     self.__random_T = 0

@@ -5,12 +5,12 @@ class BasilAlgo(BaseAlgo):
 
     def __init__(self, model, epochs, verbose):
         super().__init__(model, epochs, verbose)
-        lr = 0.001 
+        lr = 0.0001 
         loss='categorical_crossentropy'
         metrics = ['accuracy']
         optimizer = SGD(lr=lr, 
                         decay=lr / self.epochs, 
-                        momentum=0.9
+                        momentum=0.0001
                         )          
 
         self.model.compile(loss=loss, 
