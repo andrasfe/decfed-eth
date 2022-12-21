@@ -1,5 +1,6 @@
 import json
 import time
+import pickle
 from .base_trainer import BaseTrainer
 from ..utilities import float_to_int
 from ..training_algos import RegularAlgo
@@ -21,7 +22,9 @@ class RegularTrainer(BaseTrainer):
 
     if weights_id != '':
       weights = self.weights_loader.load(weights_id)
-      self.training_algo.set_weights(weights)
+      with open(weights, 'rb') as f:
+        weight_values = pickle.load(f)
+        self.training_algo.set_weights(weight_values)
 
     self._log_info(json.dumps({ 'event': 'train_start', 'round': round,'ts': time.time_ns() }))
 

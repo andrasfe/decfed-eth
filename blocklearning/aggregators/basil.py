@@ -68,7 +68,7 @@ class BasilAggregator():
         
         return my_new_layer
 
-    def aggregate(self, my_model, submissions, data_tf):
+    def aggregate(self, my_model, submissions, data_tf, image_lib = 'cifar'):
         _, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
         my_last_dense_layer = self.__get_last_dense_layer_weights(my_model)
         prioritizer = Prioritizer(my_last_dense_layer, .4)
@@ -77,7 +77,7 @@ class BasilAggregator():
         last_dense_layer_list = []
         f1_list = []
 
-        model = SimpleMLP.build(784, 10)
+        model = SimpleMLP.build(784 if image_lib == 'mnist' else 1024, 10)
 
         for submission in submissions:
             weights_cid = submission[3]

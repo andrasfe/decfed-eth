@@ -58,10 +58,11 @@ def run_all_trainers(trainers):
 @click.command()
 @click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='', help='api uri or None')
+@click.option('--image_lib', default='cifar', help='cifar or mnist')
 @click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
-@click.option('--train_data_path', default='../datasets/mnist/10/train/{}.tfrecord', help='location of client data (tfrecs)')
-@click.option('--test_data_path', default='../datasets/mnist/10/test/{}.tfrecord', help='location of client data (tfrecs)')
-@click.option('--owner_data_path', default='../datasets/mnist/10/owner_val.tfrecord', help='location of client data (tfrecs)')
+@click.option('--train_data_path', default='../datasets/{}/10/train/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--test_data_path', default='../datasets/{}/10/test/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--owner_data_path', default='../datasets/{}/10/owner_val.tfrecord', help='location of client data (tfrecs)')
 @click.option('--data_dir', default=utilities.default_datadir, help='ethereum data directory path')
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--abi', default='../../build/contracts/Different.json', help='contract abi file')
@@ -70,7 +71,7 @@ def run_all_trainers(trainers):
 @click.option('--pedersen_address', required=True, help='pedersen contract address')
 
 
-def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, owner_data_path, data_dir, provider, abi, pedersen_abi, contract_address, pedersen_address):
+def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path, owner_data_path, data_dir, provider, abi, pedersen_abi, contract_address, pedersen_address):
     account_address, account_password = get_account_by_role_by_index(data_dir, 'owner', 0)
     contract = Contract(log, provider, abi, account_address, account_password, contract_address)
 
@@ -83,10 +84,7 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, owner_dat
             print('weights cid', cid)
 
     weights = weights_loader.load(cid)
-
-    build_shape = 784 #(28, 28, 3)  # 1024 <- CIFAR-10    # 784 # for MNIST
-    smlp_global = SimpleMLP()
-    model = smlp_global.build(build_shape, 10) 
+    model = SimpleMLP.build(image_lib) 
 
     # model.set_weights(weights)
     aggregator = FedAvgAggregator(-1, weights_loader)
@@ -101,8 +99,8 @@ def main(ipfs_api, cid, weights_path, train_data_path, test_data_path, owner_dat
         pedersen_contract = Pedersen(log, provider, pedersen_abi, account_address, account_password, pedersen_address)
         local_contracts.append(local_contract)
         local_model = tf.keras.models.clone_model(model)
-        train_ds = tf.data.experimental.load(train_data_path.format(i))
-        test_ds = tf.data.experimental.load(test_data_path.format(i))
+        train_ds = tf.data.experimental.load(train_data_path.format(image_lib,i))
+        test_ds = tf.data.experimental.load(test_data_path.format(image_lib, i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
         trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
                                         train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None)
