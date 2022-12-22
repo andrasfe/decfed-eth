@@ -77,7 +77,7 @@ class BasilAggregator():
         last_dense_layer_list = []
         f1_list = []
 
-        model = SimpleMLP.build(784 if image_lib == 'mnist' else 1024, 10)
+        model = SimpleMLP.build(image_lib)
 
         for submission in submissions:
             weights_cid = submission[3]

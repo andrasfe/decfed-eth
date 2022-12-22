@@ -1,15 +1,14 @@
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import shutil
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.utils import to_categorical
 import random
 import click
 
 from tensorflow.keras.datasets import cifar10
 
 def batch_data(data_shard, bs=5):
-    #seperate shard into data and labels lists
     data, label = zip(*data_shard)
     X_data_train, X_data_test, y_data_train, y_data_test = train_test_split(data, 
                                                     label, 
@@ -35,8 +34,13 @@ def create_clients(image_list, label_list, num_clients=10):
     data = [(x,y) for _,y,x in sorted_zip]
 
     shards = []
-    vals = np.random.default_rng().dirichlet(np.ones(num_clients), size=1)
-    k_nums = [round(v) for v in vals[0]*len(data)]
+    vals = None
+    k_nums = [0]
+
+    while min(k_nums) <3000:
+        vals = np.random.default_rng().dirichlet(np.ones(num_clients), size=1)
+        k_nums = [round(v) for v in vals[0]*len(data)]
+
     offset = 0
 
     for i in range(num_clients):
@@ -55,9 +59,20 @@ def create_clients(image_list, label_list, num_clients=10):
 @click.option('--data_path', default='./datasets', help='location of training data')
 
 def main(no_trainers, data_path):
+    try:
+        shutil.rmtree('{}/cifar'.format(data_path))
+    except:
+        print('directory {}/cifar does not exist'.format(data_path))
+
     (X_train,y_train) , (X_test, y_test) = cifar10.load_data()
+
+    X_train = np.concatenate((X_train, X_test), axis=0)
+    y_train = np.concatenate((y_train, y_test), axis=0)
     X_train = X_train/255
     X_test = X_test/255
+
+    y_train  = to_categorical(y_train, 10)
+    y_test = to_categorical(y_test, 10)
 
     # create one extra for the owner data set
     participants = create_clients(X_train, y_train, num_clients=(no_trainers + 1))

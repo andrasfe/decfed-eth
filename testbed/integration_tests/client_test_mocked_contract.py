@@ -15,7 +15,7 @@ import pickle
 @click.option('--image_lib', default='cifar', help='api uri or None')
 @click.option('--cid', default='', help='api uri or None')
 @click.option('--weights_path', default='../datasets/weights_{}.pkl', help='location of weights .pkl file')
-@click.option('--data_path', default='../datasets/cifar/10/train/1.tfrecord', help='location of client data (tfrecs)')
+@click.option('--data_path', default='../datasets/cifar/10/train/3.tfrecord', help='location of client data (tfrecs)')
 
 def main(ipfs_api, image_lib, cid, weights_path, data_path):
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
