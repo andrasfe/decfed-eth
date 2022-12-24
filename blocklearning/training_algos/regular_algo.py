@@ -3,6 +3,7 @@ from tensorflow.keras.optimizers import SGD
 from .base_algo import BaseAlgo
 import tensorflow as tf
 from sklearn.metrics import accuracy_score
+import numpy as np
 
 class RegularAlgo(BaseAlgo):
 

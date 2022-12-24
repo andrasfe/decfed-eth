@@ -13,7 +13,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             // "args": ["--contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0", "--abi", "../build/contracts/NoScore.json", "--rounds", "50"]
-            // "args": ["--contract_address", "0xC5653a0A146E2D0a2fEa8Ec5007182979D66051D", "--pedersen_address", "0xc11d51C4Cc8b3D6e0FE0a173D738F510Cb62A9DF"]
+            // "args": ["--contract_address", "0xC13919D9D17b2882C3BA5f7F810fC96E6639905a", "--pedersen_address", "0x9E8a4B53FC46f113a8dBA3566C60589CD3B02Dfb"]
             // "args": ["--pedersen_address", "0x9836930772454ca72e872A61b450e5CbD3c263E3"]
         }
     ]

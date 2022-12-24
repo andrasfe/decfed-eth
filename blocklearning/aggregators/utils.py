@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import pickle
 
 def scale_model_weights(weight, scalar):
     '''function for scaling a models weights'''
@@ -27,7 +28,7 @@ def weighted_fed_avg(submissions, weights_loader):
 
   for i, submission in enumerate(submissions):
     weights_cid = submission[3]
-    weights = weights_loader.load(weights_cid)
+    weights = weights_loader.load(weights_cid)    
     scaled_weights = scale_model_weights(weights, scaling_factor)
     scaled_local_weight_list.append(scaled_weights)
 

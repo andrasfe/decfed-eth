@@ -303,6 +303,16 @@ contract Different {
         _submitAggregation(_weights);
     }
 
+    function getAggregationForRound(uint256 selectedRound)  
+        public 
+        view  
+        returns (
+            string memory
+        )
+    {
+        return aggregations[selectedRound][msg.sender];
+    }
+
     function terminateRound() public {
         require(roundPhase == RoundPhase.WaitingForTermination, "NWFT");
 

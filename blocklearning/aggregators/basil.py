@@ -7,8 +7,10 @@ from sklearn.metrics import f1_score
 from .prioritizer import Prioritizer
 
 class BasilAggregator():
-    def __init__(self, weights_loader):
+    def __init__(self, weights_loader, image_lib = 'cifar'):
         self.weights_loader = weights_loader
+        self.image_lib = image_lib
+        self.last_dense_index = -1 if image_lib == 'cifar' else -2
 
     def __calc_F1(self, data_tf, model, labels = [0,1,2,3,4,5,6,7,8,9]):
         x, y = tuple(zip(*data_tf))
@@ -20,12 +22,12 @@ class BasilAggregator():
         return f1, detailed_f1
 
     def __get_last_dense_layer_weights(self, model):
-        return model.layers[-2].get_weights()[1]
+        return model.layers[self.last_dense_index].get_weights()[1]
 
     def __set_last_dense_layer_weights(self, model, last_dense_output):
-        last_dense_weights = model.layers[-2].get_weights()
+        last_dense_weights = model.layers[self.last_dense_index].get_weights()
         last_dense_weights[1] = last_dense_output
-        model.layers[-2].set_weights(last_dense_weights)
+        model.layers[self.last_dense_index].set_weights(last_dense_weights)
 
     def __weight_sigmoid(self, omega1, omega2, disc, certainty):
         return max(0, omega1/(1 + math.exp(-disc/100)) - omega2)*certainty

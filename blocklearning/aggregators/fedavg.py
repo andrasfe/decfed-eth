@@ -1,9 +1,8 @@
 from .utils import *
 
 class FedAvgAggregator():
-  def __init__(self, model_size, weights_loader):
-    self.model_size = model_size
+  def __init__(self, weights_loader):
     self.weights_loader = weights_loader
 
-  def aggregate(self, trainers, submissions, scorers = None, scores = None):
+  def aggregate(self, submissions):
     return weighted_fed_avg(submissions, self.weights_loader)

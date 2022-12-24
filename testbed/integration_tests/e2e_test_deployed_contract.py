@@ -87,7 +87,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     model = SimpleMLP.build(image_lib) 
 
     # model.set_weights(weights)
-    aggregator = FedAvgAggregator(-1, weights_loader)
+    aggregator = FedAvgAggregator(weights_loader)
     basil_aggregator = BasilAggregator(weights_loader)
     priv = Gaussian()
 
@@ -106,10 +106,15 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
                                         train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None)
         trainers.append(trainer)
 
-
-    account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', len(trainers))
+    aggregator_idx = len(trainers)
+    account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', aggregator_idx)
     aggregator_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
-    server = Aggregator(aggregator_contract, weights_loader, model, aggregator, with_scores=False, logger=log)
+    aggregator_model = tf.keras.models.clone_model(model)
+    train_ds = None # for now
+    test_ds = tf.data.experimental.load(owner_data_path.format(image_lib))
+
+    server = Aggregator(contract=aggregator_contract, weights_loader=weights_loader, model=aggregator_model, 
+                                        train_ds=train_ds, test_ds=test_ds, aggregator=aggregator, with_scores=False, logger=log)
 
     all_trainers = contract.get_trainers()
     all_aggregators = contract.get_aggregators()

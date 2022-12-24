@@ -1,7 +1,6 @@
 import os
 import tempfile
 import tensorflow as tf
-from .model import Model
 
 class IpfsModelLoader():
   def __init__(self, contract, weights_loader, ipfs_api = '/ip4/127.0.0.1/tcp/5001') -> None:
@@ -26,7 +25,7 @@ class IpfsModelLoader():
       weights = self.weights_loader.load(weights_cid)
       model.set_weights(weights)
 
-    return Model(model)
+    return model
 
   def load(self):
     model_cid = self.contract.get_model()
