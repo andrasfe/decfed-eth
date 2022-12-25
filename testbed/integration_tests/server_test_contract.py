@@ -80,7 +80,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     model = SimpleMLP.build(image_lib) 
 
     # model.set_weights(weights)
-    aggregator = FedAvgAggregator(-1, weights_loader)
+    aggregator = FedAvgAggregator(weights_loader)
 
     account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', 10)
     aggregator_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
