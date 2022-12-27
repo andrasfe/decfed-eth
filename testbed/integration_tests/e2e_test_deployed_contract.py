@@ -103,7 +103,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
         test_ds = tf.data.experimental.load(test_data_path.format(image_lib, i))
         # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
         trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
-                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None)
+                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None, logger=log)
         trainers.append(trainer)
 
     aggregator_idx = len(trainers)

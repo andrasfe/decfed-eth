@@ -73,7 +73,7 @@ class BasilAggregator():
     def aggregate(self, my_model, submissions, data_tf, image_lib = 'cifar'):
         _, my_detailed_f1 = self.__calc_F1(data_tf, my_model)
         my_last_dense_layer = self.__get_last_dense_layer_weights(my_model)
-        prioritizer = Prioritizer(my_last_dense_layer, .4)
+        prioritizer = Prioritizer(my_last_dense_layer, .40)
 
         weight_list = []
         last_dense_layer_list = []

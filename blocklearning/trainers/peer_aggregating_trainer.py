@@ -22,6 +22,12 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.commitment = None
     super().__init__()
 
+  def __load_weights_by_id(self, weights_id):
+    if weights_id != '':
+      weights = self.weights_loader.load(weights_id)
+      self.training_algo.set_weights(weights, freeze_except_last_dense=True)
+
+
   def __do_first_update(self):
     history = self.training_algo.fit(self.train_ds_batched)
     acc, loss = self.training_algo.test(self.test_ds_batched)
@@ -57,14 +63,10 @@ class PeerAggregatingTrainer(BaseTrainer):
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
 
-    if weights_id != '':
-      weights = self.weights_loader.load(weights_id)
-      self.training_algo.set_weights(weights, freeze_except_last_dense=True)
-
-
     phase = self.contract.get_round_phase()
         
     if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
+      self.__load_weights_by_id(weights_id)
       self.__do_first_update()
     elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
       self.__do_proof_presentment()
@@ -72,11 +74,15 @@ class PeerAggregatingTrainer(BaseTrainer):
       (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
       self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
+      my_index = trainers.index(self.contract.account)
+      submissions.pop(my_index)    
+
       history = self.training_algo.fit(self.train_ds_batched)
+      pre_acc, pre_loss = self.training_algo.test(self.test_ds_batched)
       new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
       self.training_algo.set_model(new_model)
       acc, loss = self.training_algo.test(self.test_ds_batched)
-      self._log_info(json.dumps({ 'event': 'self_agg_end', 'round': round,'ts': time.time_ns() }))
+      self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
 
       trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
       validationAccuracy = float_to_int(acc*100)

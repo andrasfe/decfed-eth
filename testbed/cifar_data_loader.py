@@ -12,8 +12,8 @@ def batch_data(data_shard, bs=5):
     data, label = zip(*data_shard)
     X_data_train, X_data_test, y_data_train, y_data_test = train_test_split(data, 
                                                     label, 
-                                                    train_size=0.8,
-                                                    test_size=0.2, 
+                                                    train_size=0.9,
+                                                    test_size=0.1, 
                                                     random_state=42)
     train_dataset = tf.data.Dataset.from_tensor_slices((list(X_data_train), list(y_data_train)))
     test_dataset = tf.data.Dataset.from_tensor_slices((list(X_data_test), list(y_data_test)))

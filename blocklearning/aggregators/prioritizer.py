@@ -4,9 +4,10 @@ import numpy as np
 from itertools import islice
 
 class Prioritizer():
-    def __init__(self, my_weights, alpha):
+    def __init__(self, my_weights, alpha, max_selected = 10):
         self.fl, self.fm, self.fh = self.get_parms(alpha=alpha)
         self.my_weights = my_weights
+        self.max_selected = max_selected
 
     def get_parms(self, alpha):
         return ((1 - alpha)**2, -2*alpha**2 + 2*alpha, alpha**2)
@@ -35,18 +36,19 @@ class Prioritizer():
 
         return (lo, mid, hi)
 
-    def select_qualified(self, weight_group, perc):
-        cnt = ceil(perc*len(weight_group))
+    def select_qualified(self, weight_group, perc, low = False):
+        cnt = round(perc*self.max_selected)
+        group_len = len(weight_group)
         keys = list(weight_group.keys())
         values =  list(weight_group.values())
-        return {keys[k]:values[k] for k in range(0, cnt)}
+        return {keys[k]:values[k] for k in range(min(cnt, group_len))} if low else {keys[k]:values[k] for k in range(max(0, group_len - cnt), group_len)} 
 
     def get_prioritized_weights(self, weights):
         sorted_map = self.get_sorted_distance_map(weights)
         weight_groups = self.group_weights_by_dist(sorted_map)
-        qual_lo = self.select_qualified(weight_groups[0], self.fl)
-        qual_mid = self.select_qualified(weight_groups[1], self.fm)
-        qual_hi = self.select_qualified(weight_groups[2], self.fh)
+        qual_lo = self.select_qualified(weight_groups[0], self.fl, False)
+        qual_mid = self.select_qualified(weight_groups[1], self.fm, True)
+        qual_hi = self.select_qualified(weight_groups[2], self.fh, True)
         qual_lo.update(qual_mid)
         qual_lo.update(qual_hi)
         print('filtered out', len(qual_lo), ' from ', len(weights))
