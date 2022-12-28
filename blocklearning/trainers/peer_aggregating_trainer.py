@@ -25,11 +25,11 @@ class PeerAggregatingTrainer(BaseTrainer):
   def __load_weights_by_id(self, weights_id):
     if weights_id != '':
       weights = self.weights_loader.load(weights_id)
-      self.training_algo.set_weights(weights, freeze_except_last_dense=True)
+      self.training_algo.set_weights(weights, freeze_except_last=True)
 
 
   def __do_first_update(self):
-    history = self.training_algo.fit(self.train_ds_batched)
+    history = self.training_algo.fit(self.train_ds_batched, freeze_except_last=True)
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(acc*100)
@@ -71,6 +71,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
       self.__do_proof_presentment()
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
+      self.__load_weights_by_id(weights_id)
       (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
       self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
