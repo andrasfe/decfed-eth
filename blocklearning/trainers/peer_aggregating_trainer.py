@@ -25,11 +25,11 @@ class PeerAggregatingTrainer(BaseTrainer):
   def __load_weights_by_id(self, weights_id):
     if weights_id != '':
       weights = self.weights_loader.load(weights_id)
-      self.training_algo.set_weights(weights, freeze_except_last=True)
+      self.training_algo.set_weights(weights, freeze_except_last=False)
 
 
   def __do_first_update(self):
-    history = self.training_algo.fit(self.train_ds_batched, freeze_except_last=True)
+    history = self.training_algo.fit(self.train_ds_batched, freeze_except_last=False)
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
     validationAccuracy = float_to_int(acc*100)
@@ -79,11 +79,13 @@ class PeerAggregatingTrainer(BaseTrainer):
       submissions.pop(my_index)    
 
       history = self.training_algo.fit(self.train_ds_batched)
-      pre_acc, pre_loss = self.training_algo.test(self.test_ds_batched)
-      new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
-      self.training_algo.set_model(new_model)
+
+      # pre_acc, pre_loss = self.training_algo.test(self.test_ds_batched)
+      # new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
+      # self.training_algo.set_model(new_model)
+
       acc, loss = self.training_algo.test(self.test_ds_batched)
-      self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
+      # self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
 
       trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
       validationAccuracy = float_to_int(acc*100)

@@ -39,7 +39,7 @@ class Aggregator():
 
     self.__log_info(json.dumps({ 'event': 'fedavg_start', 'round': round, 'ts': time.time_ns() }))
 
-    new_weights = self.aggregator.aggregate(submissions)
+    new_weights = self.aggregator.aggregate(trainers, submissions)
     acc, loss = self.training_algo.test(self.test_ds_batched)
 
     self.__log_info(json.dumps({ 'event': 'fedavg_end', 'round': round,'ts': time.time_ns(), 'accuracy': acc }))

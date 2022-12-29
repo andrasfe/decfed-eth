@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle
+from blocklearning.aggregators.fedavg_last_layer import FedAvgOutputAggregator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -8,7 +9,7 @@ from blocklearning.trainers import RegularTrainer, PeerAggregatingTrainer
 from blocklearning.aggregator import Aggregator
 from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
-from blocklearning.aggregators import FedAvgAggregator, BasilAggregator
+from blocklearning.aggregators import FedAvgAggregator, BasilAggregator, TFMultiKrumAggregator
 from blocklearning.contract import RoundPhase
 from blocklearning.training_algos import RegularAlgo
 from blocklearning.diffpriv import Gaussian
@@ -87,9 +88,9 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     model = SimpleMLP.build(image_lib) 
 
     # model.set_weights(weights)
-    aggregator = FedAvgAggregator(weights_loader)
+    aggregator = TFMultiKrumAggregator(weights_loader, 10, 1)
     basil_aggregator = BasilAggregator(weights_loader)
-    priv = Gaussian()
+    # priv = Gaussian()
 
     trainers = []
     local_contracts = []
@@ -161,14 +162,14 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
         print(subm_benchmark)
         log.info(subm_benchmark)
 
-    # cid = contract.get_weights_for_round(round)
-    # global_weights = weights_loader.load(cid)
-    # model.set_weights(global_weights)
-    # test_ds = tf.data.experimental.load(owner_data_path)
-    # algo = RegularAlgo(model, 2, True)
-    # acc, loss = algo.test(test_ds)
-    # benchmarks='{},{},{}'.format(round, acc, loss)
-    # print(benchmarks)
-    # log.info(benchmarks)
+    cid = contract.get_weights_for_round(round)
+    global_weights = weights_loader.load(cid)
+    model.set_weights(global_weights)
+    test_ds = tf.data.experimental.load(owner_data_path.format(image_lib))
+    algo = RegularAlgo(model, 2, True)
+    acc, loss = algo.test(test_ds)
+    benchmarks='{},{},{}'.format(round, acc, loss)
+    print(benchmarks)
+    log.info(benchmarks)
     
 main()

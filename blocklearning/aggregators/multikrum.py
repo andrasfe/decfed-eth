@@ -1,6 +1,7 @@
 import numpy as np
 from .utils import *
 
+
 class MultiKrumAggregator():
   def __init__(self, model_size, weights_loader):
     self.model_size = model_size
@@ -21,3 +22,12 @@ class MultiKrumAggregator():
     selected_weights = [samples for (_, _, samples, _) in selected_submissions]
 
     return weighted_fed_avg(selected_submissions, self.model_size, self.weights_loader, selected_weights)
+
+class TFMultiKrumAggregator():
+  def __init__(self, weight_loader, nbworkers, nbbyzwrks):
+    self.agg = TFKrumGAR(nbworkers, nbbyzwrks)
+    self.weights_loader = weight_loader
+
+  def aggregate(self, trainers, submissions):
+    
+    return self.agg.aggregate(weights_from_storage(self.weights_loader, submissions))
