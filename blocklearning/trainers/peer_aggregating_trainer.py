@@ -1,9 +1,10 @@
 import json
 import time
 from .base_trainer import BaseTrainer
-from ..utilities import float_to_int
-from ..training_algos import RegularAlgo
+from blocklearning.utilities import float_to_int
+from blocklearning.training_algos import RegularAlgo
 from blocklearning.contract import RoundPhase
+from blocklearning.aggregators import ModelSelector
 from random import randint
 
 class PeerAggregatingTrainer(BaseTrainer):
@@ -73,10 +74,10 @@ class PeerAggregatingTrainer(BaseTrainer):
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
       self.__load_weights_by_id(weights_id)
       (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
-      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns() }))
 
       my_index = trainers.index(self.contract.account)
-      submissions.pop(my_index)    
+      submissions.pop(my_index)  
+      trainers.pop(my_index)   
 
       history = self.training_algo.fit(self.train_ds_batched)
 
@@ -89,6 +90,10 @@ class PeerAggregatingTrainer(BaseTrainer):
 
       trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
       validationAccuracy = float_to_int(acc*100)
+
+      top_trainers = ModelSelector(self.weights_loader).closestToLocal(self.training_algo.get_weights(), trainers, submissions)
+      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
+
 
       weights = None
 

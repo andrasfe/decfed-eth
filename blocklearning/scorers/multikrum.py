@@ -10,7 +10,7 @@ class MultiKrumScorer():
     f = R // 3 - 1
     closest_updates = R - f - 2
 
-    weights_cids = [cid for (_, _, _, cid) in submissions]
+    weights_cids = [cid for (_, _, _, cid, _, _) in submissions]
     weights = [self.weights_loader.load(cid) for cid in weights_cids]
 
     scores = []

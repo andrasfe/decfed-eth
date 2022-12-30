@@ -1,13 +1,13 @@
 import numpy as np
 from .utils import *
 
-
 class MultiKrumAggregator():
-  def __init__(self, model_size, weights_loader):
+  def __init__(self, weights_loader, model_size):
     self.model_size = model_size
     self.weights_loader = weights_loader
 
-  def aggregate(self, trainers, submissions, scorers = None, scores = None):
+  def aggregate(self, trainers, submissions):
+    trainers, scores, weights = score(self.weights_loader, trainers, submissions)
     medians = []
     for t, trainer in enumerate(trainers):
       medians.append(np.median(scores[t]))
@@ -18,16 +18,7 @@ class MultiKrumAggregator():
 
     sorted_idxs = np.argsort(medians)
     lowest_idxs = sorted_idxs[:R-f]
-    selected_submissions = [submissions[i] for i in lowest_idxs]
-    selected_weights = [samples for (_, _, samples, _) in selected_submissions]
+    selected_weights = [weights[i] for i in lowest_idxs]
 
-    return weighted_fed_avg(selected_submissions, self.model_size, self.weights_loader, selected_weights)
+    return fed_avg(selected_weights)
 
-class TFMultiKrumAggregator():
-  def __init__(self, weight_loader, nbworkers, nbbyzwrks):
-    self.agg = TFKrumGAR(nbworkers, nbbyzwrks)
-    self.weights_loader = weight_loader
-
-  def aggregate(self, trainers, submissions):
-    
-    return self.agg.aggregate(weights_from_storage(self.weights_loader, submissions))

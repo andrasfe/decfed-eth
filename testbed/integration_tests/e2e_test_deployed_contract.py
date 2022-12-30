@@ -9,7 +9,7 @@ from blocklearning.trainers import RegularTrainer, PeerAggregatingTrainer
 from blocklearning.aggregator import Aggregator
 from blocklearning.weights_loaders import IpfsWeightsLoader
 from blocklearning.models import SimpleMLP
-from blocklearning.aggregators import FedAvgAggregator, BasilAggregator, TFMultiKrumAggregator
+from blocklearning.aggregators import FedAvgAggregator, BasilAggregator, MultiKrumAggregator
 from blocklearning.contract import RoundPhase
 from blocklearning.training_algos import RegularAlgo
 from blocklearning.diffpriv import Gaussian
@@ -88,7 +88,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     model = SimpleMLP.build(image_lib) 
 
     # model.set_weights(weights)
-    aggregator = TFMultiKrumAggregator(weights_loader, 10, 1)
+    aggregator = MultiKrumAggregator(weights_loader, 10)
     basil_aggregator = BasilAggregator(weights_loader)
     # priv = Gaussian()
 

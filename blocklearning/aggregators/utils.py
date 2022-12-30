@@ -1,98 +1,59 @@
 import numpy as np
 import tensorflow as tf
-from .base_GAR import _GAR
+from ..utilities import floats_to_ints
 
-def weights_from_storage(weights_loader, submissions):
-    weights_list = []
+def score(weights_loader, trainers, submissions):
+    R = len(submissions)
+    f = R // 3 - 1
+    closest_updates = R - f - 2
 
-    for submission in submissions:
-        weights_cid = submission[3]
-        weights = weights_loader.load(weights_cid)
-        weights_list.append(weights)
+    weights_cids = [cid for (_, _, _, cid, _, _) in submissions]
+    weights = [weights_loader.load(cid) for cid in weights_cids]
 
-    return weights_list
-       
+    scores = []
 
-def scale_model_weights(weight, scalar):
-    '''function for scaling a models weights'''
-    weight_final = []
-    steps = len(weight)
-    for i in range(steps):
-        weight_final.append(scalar * weight[i])
-    return weight_final
+    for i in range(len(weights)):
+      dists = []
 
-def sum_scaled_weights(scaled_weight_list):
-    '''Return the sum of the listed scaled weights. The is equivalent to scaled avg of the weights'''
-    avg_grad = list()
-    #get the average grad accross all client gradients
-    for grad_list_tuple in zip(*scaled_weight_list):
-        layer_mean = tf.math.reduce_sum(grad_list_tuple, axis=0)
-        avg_grad.append(layer_mean)
-        
-    return avg_grad
+      for j in range(len(weights)):
+        if i == j:
+          continue
 
-def weighted_fed_avg(submissions, weights_loader):
-  scaled_local_weight_list = []
-  scaling_factor = 1/len(submissions)
+        diff = np.subtract(weights[j],weights[i])
+        l2_norm = np.sqrt(np.sum([np.sum(np.square(w)) for w in diff]))
+        dists.append(l2_norm)
 
-  for i, submission in enumerate(submissions):
-    weights_cid = submission[3]
-    weights = weights_loader.load(weights_cid)
-    scaled_weights = scale_model_weights(weights, scaling_factor)
-    scaled_local_weight_list.append(scaled_weights)
+      dists_sorted = np.argsort(dists)[:closest_updates]
+      score = np.array([dists[i] for i in dists_sorted]).sum()
+      scores.append(score)
 
-  new_weights = sum_scaled_weights(scaled_local_weight_list)
+def local_score(weights_loader, my_weights, other_trainers, other_submissions):
+    R = len(other_submissions)
+    f = R // 3 - 1
+    closest_updates = R - f - 2
 
-  return new_weights
+    weights_cids = [cid for (_, _, _, cid, _, _) in other_submissions]
+    weights = [weights_loader.load(cid) for cid in weights_cids]
 
-# courtesy of https://github.com/LPD-EPFL/AggregaThor
-#  https://github.com/LPD-EPFL/AggregaThor/blob/master/aggregators/__init__.py
-# 
-class TFKrumGAR(_GAR):
-  """ Full-TensorFlow Multi-Krum GAR class.
-  """
+    dists = []
 
-  def __init__(self, nbworkers, nbbyzwrks):
-    self.__nbworkers  = nbworkers
-    self.__nbbyzwrks  = nbbyzwrks
-    self.__nbselected = nbworkers - nbbyzwrks - 2
+    for i in range(len(weights)):
+        diff = np.subtract(weights[i], my_weights)
+        l2_norm = np.sqrt(np.sum([np.sum(np.square(w)) for w in diff]))
+        dists.append(l2_norm)
 
-  def aggregate(self, gradients):
-    with tf.name_scope("GAR_krum_tf"):
-      # Assertion
-      assert len(gradients) > 0, "Empty list of gradient to aggregate"
-      # Distance computations
-      distances = []
-      for i in range(self.__nbworkers - 1):
-        dists = list()
-        for j in range(i + 1, self.__nbworkers):
-            gr_i = []
-            gr_j = []
-            for w in gradients[i]:
-              gr_i.extend(np.array(w).flatten())
-            for w in gradients[j]:
-              gr_j.extend(np.array(w).flatten())
+    dists_sorted = np.argsort(dists)[:closest_updates]
+    return [other_trainers[i] for i in dists_sorted]
 
+def fed_avg(weights):
+    assert(len(weights) > 0)
+    n_layers = len(weights[0])
 
-            sqr_dst = tf.reduce_sum(tf.math.squared_difference(gr_i, gr_j))
-            dists.append(tf.negative(tf.where(tf.math.is_finite(sqr_dst), sqr_dst, tf.constant(np.inf, dtype=sqr_dst.dtype)))) # Use of 'negative' to get the smallest distances and score indexes in 'nn.top_k'
-        distances.append(dists)
-      # Score computations
-      scores = []
-      for i in range(self.__nbworkers):
-        dists = []
-        for j in range(self.__nbworkers):
-          if j == i:
-            continue
-          if j < i:
-            dists.append(distances[j][i - j - 1])
-          else:
-            dists.append(distances[i][j - i - 1])
-        dists = tf.parallel_stack(dists)
-        dists, _ = tf.nn.top_k(dists, k=(self.__nbworkers - self.__nbbyzwrks - 2), sorted=False)
-        scores.append(tf.reduce_sum(dists))
-      # Average of the 'nbselected' smallest scoring gradients
-      gradients = tf.parallel_stack(gradients)
-      scores = tf.parallel_stack(scores)
-      _, indexes = tf.nn.top_k(scores, k=self.__nbselected, sorted=False)
-      return tf.reduce_mean(tf.gather(gradients, indexes), axis=0)
+    avg_weights = list()
+
+    for layer in range(n_layers):
+        layer_weights = np.array([w[layer] for w in weights])
+        mean_layer_weights = np.mean(layer_weights, axis = 0)
+        avg_weights.append(mean_layer_weights)
+
+    return avg_weights
