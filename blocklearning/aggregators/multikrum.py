@@ -7,18 +7,8 @@ class MultiKrumAggregator():
     self.weights_loader = weights_loader
 
   def aggregate(self, trainers, submissions):
-    trainers, scores, weights = score(self.weights_loader, trainers, submissions)
-    medians = []
-    for t, trainer in enumerate(trainers):
-      medians.append(np.median(scores[t]))
-    print('medians', medians)
+    weights_cids = [cid for (_, _, _, cid, _, _) in submissions]
+    weights = [self.weights_loader.load(cid) for cid in weights_cids]
 
-    R = len(submissions)
-    f = R // 3 - 1
-
-    sorted_idxs = np.argsort(medians)
-    lowest_idxs = sorted_idxs[:R-f]
-    selected_weights = [weights[i] for i in lowest_idxs]
-
-    return fed_avg(selected_weights)
+    return multikrum_aggregate(weights, trainers)
 

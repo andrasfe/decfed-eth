@@ -73,6 +73,11 @@ class PeerAggregatingTrainer(BaseTrainer):
       self.__do_proof_presentment()
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
       self.__load_weights_by_id(weights_id)
+
+      # 
+      # to be removed
+      acc, loss = self.training_algo.test(self.test_ds_batched)
+      # 
       (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
 
       my_index = trainers.index(self.contract.account)

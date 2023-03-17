@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# WIP. didn't have time to implement yet
 # Read the input file line by line
 while read -r line; do
   # Check if the line contains "Contract address:"

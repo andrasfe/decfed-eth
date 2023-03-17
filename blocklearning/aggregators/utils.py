@@ -2,13 +2,10 @@ import numpy as np
 import tensorflow as tf
 from ..utilities import floats_to_ints
 
-def score(weights_loader, trainers, submissions):
-    R = len(submissions)
+def score(weights, trainers):
+    R = len(weights)
     f = R // 3 - 1
     closest_updates = R - f - 2
-
-    weights_cids = [cid for (_, _, _, cid, _, _) in submissions]
-    weights = [weights_loader.load(cid) for cid in weights_cids]
 
     scores = []
 
@@ -26,14 +23,12 @@ def score(weights_loader, trainers, submissions):
       dists_sorted = np.argsort(dists)[:closest_updates]
       score = np.array([dists[i] for i in dists_sorted]).sum()
       scores.append(score)
+    return trainers, scores, weights
 
-def local_score(weights_loader, my_weights, other_trainers, other_submissions):
-    R = len(other_submissions)
+def local_score(weights, my_weights, other_trainers):
+    R = len(weights)
     f = R // 3 - 1
     closest_updates = R - f - 2
-
-    weights_cids = [cid for (_, _, _, cid, _, _) in other_submissions]
-    weights = [weights_loader.load(cid) for cid in weights_cids]
 
     dists = []
 
@@ -57,3 +52,22 @@ def fed_avg(weights):
         avg_weights.append(mean_layer_weights)
 
     return avg_weights
+
+def multikrum_aggregate(weights, trainers):
+    assert(len(weights) == len(trainers))
+    trainers, scores, weights = score(weights, trainers)
+
+    medians = []
+
+    for t, trainer in enumerate(trainers):
+      medians.append(np.median(scores[t]))
+    print('medians', medians)
+
+    R = len(weights)
+    f = R // 3 - 1
+
+    sorted_idxs = np.argsort(medians)
+    lowest_idxs = sorted_idxs[:R-f]
+    selected_weights = [weights[i] for i in lowest_idxs]
+
+    return fed_avg(selected_weights)

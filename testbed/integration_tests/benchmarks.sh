@@ -7,7 +7,7 @@ pedersen_address="$2"
 rm ../../blocklearning-results/results/CURRENT/logs/report.csv
 rm ../../blocklearning-results/results/CURRENT/logs/manager.log
 
-for i in {1..10}
+for i in {1..100}
 do
    echo "Iteration $i"
    python3 e2e_test_deployed_contract.py --contract_address $contract_address --pedersen_address $pedersen_address

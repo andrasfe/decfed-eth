@@ -25,9 +25,6 @@ class Aggregator():
 
     self.__log_info(json.dumps({ 'event': 'start', 'submissions': submissions, 'round': round, 'ts': time.time_ns() }))
 
-    scorers = None
-    scores = None
-
     if self.with_scores:
       (s_trainers, s_scorers, s_scores) = self.contract.get_scorings()
       scorers = s_scorers
@@ -40,6 +37,11 @@ class Aggregator():
     self.__log_info(json.dumps({ 'event': 'fedavg_start', 'round': round, 'ts': time.time_ns() }))
 
     new_weights = self.aggregator.aggregate(trainers, submissions)
+
+    # to be deleted
+    # new_weights = self.training_algo.get_weights()
+
+    self.training_algo.set_weights(new_weights)
     acc, loss = self.training_algo.test(self.test_ds_batched)
 
     self.__log_info(json.dumps({ 'event': 'fedavg_end', 'round': round,'ts': time.time_ns(), 'accuracy': acc }))

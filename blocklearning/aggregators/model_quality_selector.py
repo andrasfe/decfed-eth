@@ -16,13 +16,18 @@ class ModelSelector():
         lowest_idxs = sorted_idxs[:R-f]
         return [trainers[i] for i in lowest_idxs], [scores[i] for i in lowest_idxs]
 
-
+    def __weights_from_submissions(self, submissions):
+        weights_cids = [cid for (_, _, _, cid, _, _) in submissions]
+        return [self.weights_loader.load(cid) for cid in weights_cids]
 
     def bestScores(self, trainers, submissions):
-        trainers, scores, _ = score(self.weights_loader, trainers, submissions)
+        weights = self.__weights_from_submissions(submissions)
+        trainers, scores, _ = score(weights, trainers)
+
         return self.__select_top(trainers, scores)
 
-    def closestToLocal(self, my_weights, other_trainers, other_submissions):
-        return local_score(self.weights_loader, my_weights, other_trainers, other_submissions)
+    def closestToLocal(self, my_weights, other_trainers, submissions):
+        weights = self.__weights_from_submissions(submissions)
+        return local_score(weights, my_weights, other_trainers)
 
  

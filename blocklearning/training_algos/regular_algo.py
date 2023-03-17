@@ -1,5 +1,5 @@
 
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.legacy import SGD
 from .base_algo import BaseAlgo
 import tensorflow as tf
 from sklearn.metrics import accuracy_score
@@ -12,7 +12,7 @@ class RegularAlgo(BaseAlgo):
         lr = 0.01 
         loss='categorical_crossentropy'
         metrics = ['accuracy']
-        optimizer = SGD(learning_rate=lr, 
+        optimizer = SGD(lr=lr, 
                         decay=lr / self.epochs, 
                         momentum=0.9
                         )          
