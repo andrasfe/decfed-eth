@@ -1,4 +1,5 @@
 
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import Activation
@@ -9,13 +10,13 @@ from tensorflow.keras.layers import MaxPool2D
 class SimpleMLP:
 
     @staticmethod
-    def build_mnist():
+    def build_mnist(shape=784, classes=10):
         model = Sequential()
-        model.add(Dense(200, input_shape=(784,)))
+        model.add(Dense(200, input_shape=(shape,)))
         model.add(Activation("relu"))
         model.add(Dense(200))
         model.add(Activation("relu"))
-        model.add(Dense(10))
+        model.add(Dense(classes, use_bias=True, name="last_dense"))
         model.add(Activation("softmax"))
         return model
     
