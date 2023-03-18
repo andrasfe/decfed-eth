@@ -9,7 +9,7 @@ import random
 import click
 from sklearn.utils import shuffle
 
-def load(paths, verbose=-1):
+def load():
     train, test = tf.keras.datasets.mnist.load_data()
     train_data, train_labels = train
     test_data, test_labels = test
@@ -58,11 +58,11 @@ def batch_data(data_shard, bs=30, flip=False):
         
     train_dataset = tf.data.Dataset.from_tensor_slices((np.array(list(X_data_train)), np.array(list(y_data_train))))
     test_dataset = tf.data.Dataset.from_tensor_slices((np.array(list(X_data_test)), np.array(list(y_data_test))))
-    return (train_dataset.shuffle(len(y_data_train)).batch(bs), test_dataset.batch(bs))
+    return (train_dataset.shuffle(len(y_data_train)).batch(bs, drop_remainder=True), test_dataset.batch(bs, drop_remainder=True))
 
-def create_clients(image_list, label_list, num_clients=100, initial='clients'):
+def create_clients(image_list, label_list, num_clients=10, initial=''):
     #create a list of client names
-    client_names = ['{}_{}'.format(initial, i+1) for i in range(num_clients)]
+    client_names = ['{}{}'.format(initial, i) for i in range(num_clients)]
     data = list(zip(image_list, label_list))
     size = len(data)//num_clients   
     shards = [data[i:i + size] for i in range(0, size*num_clients, size)]
@@ -72,21 +72,16 @@ def create_clients(image_list, label_list, num_clients=100, initial='clients'):
 @click.command()
 @click.option('--no_trainers', default='10', help='number of clients')
 @click.option('--data_path', default='./datasets', help='location of training data')
-@click.option('--img_path', default='./datasets/trainingSet', help='location of images')
-def main(no_trainers, data_path, img_path):
+def main(no_trainers, data_path):
     no_trainers = int(no_trainers)
-    image_paths = list(paths.list_images(img_path))
 
-    image_list, _, label_list, _ = load(image_paths, verbose=10000)
-
-    lb = LabelBinarizer()
-    label_list = lb.fit_transform(label_list)
+    image_list, _, label_list, _ = load()
 
     X_train, X_test, y_train, y_test = train_test_split(image_list, label_list, test_size=0.2, random_state=42)   
     print(len(X_train), len(X_test), len(y_train), len(y_test)) 
 
     # create one extra for the owner data set
-    participants = create_clients(X_train, y_train, num_clients=(no_trainers + 1))
+    participants = create_clients(X_train, y_train, num_clients=no_trainers + 1)
 
     path_template = "{}/mnist/{}/{}/{}.tfrecord"
     

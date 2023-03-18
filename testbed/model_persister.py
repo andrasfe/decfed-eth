@@ -1,4 +1,5 @@
 from blocklearning.models import SimpleMLP
+from blocklearning.training_algos import RegularAlgo
 import click
 import pickle
 import tensorflow as tf
@@ -7,13 +8,14 @@ from blocklearning.weights_loaders.ipfs import IpfsWeightsLoader
 
 @click.command()
 @click.option('--location', default='./datasets', help='location for model')
-@click.option('--image_lib', default='cifar', help='location for model')
+@click.option('--image_lib', default='mnist', help='location for model')
 @click.option('--idx', default='owner_val', help='location for model')
-@click.option('--data_path', default='./datasets/cifar/10/{}.tfrecord', help='location of client data (tfrecs)')
+@click.option('--data_path', default='./datasets/mnist/10/{}.tfrecord', help='location of client data (tfrecs)')
 def main(location, image_lib, idx, data_path):
     global_model = SimpleMLP.build(image_lib) 
     batched_ds = tf.data.experimental.load(data_path.format(idx))
-    global_model.fit(batched_ds, epochs=3, verbose=True)
+    algo = RegularAlgo(model=global_model,  image_lib=image_lib, epochs=3)
+    algo.fit(batched_ds)
     global_model.save('{}/model_{}_{}.h5'.format(location, image_lib, idx))
 
     weights = global_model.get_weights()

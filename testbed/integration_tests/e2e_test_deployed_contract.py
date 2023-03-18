@@ -59,8 +59,8 @@ def run_all_trainers(trainers):
 @click.command()
 @click.option('--ipfs_api', default=None, help='api uri or None')
 @click.option('--cid', default='', help='api uri or None')
-@click.option('--image_lib', default='cifar', help='cifar or mnist')
-@click.option('--weights_path', default='../datasets/weights.pkl', help='location of weights .pkl file')
+@click.option('--image_lib', default='mnist', help='cifar or mnist')
+@click.option('--weights_path', default='../datasets/weights_{}_owner_val.pkl', help='location of weights .pkl file')
 @click.option('--train_data_path', default='../datasets/{}/10/train/{}.tfrecord', help='location of client data (tfrecs)')
 @click.option('--test_data_path', default='../datasets/{}/10/test/{}.tfrecord', help='location of client data (tfrecs)')
 @click.option('--owner_data_path', default='../datasets/{}/10/owner_val.tfrecord', help='location of client data (tfrecs)')
@@ -79,7 +79,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
 
     if cid == '':
-        with open(weights_path, 'rb') as fp:
+        with open(weights_path.format(image_lib), 'rb') as fp:
             weights = pickle.load(fp)
             cid = weights_loader.store(weights)
             print('weights cid', cid)

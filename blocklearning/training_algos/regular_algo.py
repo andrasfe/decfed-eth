@@ -1,9 +1,9 @@
 
+import tensorflow as tf
 from tensorflow_privacy.privacy.analysis import compute_dp_sgd_privacy
-from tensorflow_privacy.DPKerasSGDOptimizer import DPKerasSGDOptimizer
+from tensorflow_privacy import DPKerasSGDOptimizer
 from .base_algo import BaseAlgo
 from sklearn.metrics import accuracy_score
-import tensorflow as tf
 
 class RegularAlgo(BaseAlgo):
 
@@ -22,9 +22,12 @@ class RegularAlgo(BaseAlgo):
             noise_multiplier=noise_multiplier,
             num_microbatches=num_microbatches,
             learning_rate=learning_rate)
+        
+        loss = tf.keras.losses.CategoricalCrossentropy(
+            from_logits=False, reduction=tf.losses.Reduction.NONE)
 
         self.model.compile(optimizer=optimizer, 
-                           loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction=tf.losses.Reduction.NONE), 
+                           loss=loss, 
                            metrics=['accuracy'])
 
     def __freeze_except_last(self):
