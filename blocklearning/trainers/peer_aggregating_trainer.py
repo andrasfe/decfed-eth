@@ -8,9 +8,8 @@ from blocklearning.aggregators import ModelSelector
 from random import randint
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, priv = None, rounds=5):
+  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, rounds=5):
     self.logger = logger
-    self.priv = priv
     self.weights_loader = weights_loader
     self.contract = contract
     self.pedersen = pedersen
@@ -74,21 +73,16 @@ class PeerAggregatingTrainer(BaseTrainer):
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
       self.__load_weights_by_id(weights_id)
 
-      # 
-      # to be removed
       acc, loss = self.training_algo.test(self.test_ds_batched)
-      # 
       (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
 
       my_index = trainers.index(self.contract.account)
       submissions.pop(my_index)  
       trainers.pop(my_index)   
 
-      history = self.training_algo.fit(self.train_ds_batched)
+      honest_trainers, dishonest_trainers, _ = self.aggregator.assess_trainers(trainers, submissions)
 
-      # pre_acc, pre_loss = self.training_algo.test(self.test_ds_batched)
-      # new_model = self.aggregator.aggregate(self.training_algo.get_model(), submissions, self.test_ds_batched)
-      # self.training_algo.set_model(new_model)
+      history = self.training_algo.fit(self.train_ds_batched)
 
       acc, loss = self.training_algo.test(self.test_ds_batched)
       # self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
@@ -100,13 +94,7 @@ class PeerAggregatingTrainer(BaseTrainer):
       self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
 
 
-      weights = None
-
-      if self.priv is None:
-        weights = self.training_algo.get_weights()
-      else:
-        weights = self.priv.privatized_weights(self.training_algo.get_model())
-
+      weights = self.training_algo.get_weights()
       weights_id = self.weights_loader.store(weights)
 
       submission = {

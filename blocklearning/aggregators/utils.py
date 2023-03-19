@@ -1,6 +1,4 @@
 import numpy as np
-import tensorflow as tf
-from ..utilities import floats_to_ints
 
 def score(weights, trainers):
     R = len(weights)
@@ -23,7 +21,7 @@ def score(weights, trainers):
       dists_sorted = np.argsort(dists)[:closest_updates]
       score = np.array([dists[i] for i in dists_sorted]).sum()
       scores.append(score)
-    return trainers, scores, weights
+    return trainers, scores
 
 def local_score(weights, my_weights, other_trainers):
     R = len(weights)
@@ -53,21 +51,4 @@ def fed_avg(weights):
 
     return avg_weights
 
-def multikrum_aggregate(weights, trainers):
-    assert(len(weights) == len(trainers))
-    trainers, scores, weights = score(weights, trainers)
 
-    medians = []
-
-    for t, trainer in enumerate(trainers):
-      medians.append(np.median(scores[t]))
-    print('medians', medians)
-
-    R = len(weights)
-    f = R // 3 - 1
-
-    sorted_idxs = np.argsort(medians)
-    lowest_idxs = sorted_idxs[:R-f]
-    selected_weights = [weights[i] for i in lowest_idxs]
-
-    return fed_avg(selected_weights)

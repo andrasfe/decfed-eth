@@ -3,64 +3,55 @@ import time
 import click
 import requests
 import blocklearning
-import blocklearning.scorers as scorers
-import blocklearning.model_loaders as model_loaders
-import blocklearning.weights_loaders as weights_loaders
+from blocklearning.model_loaders import IpfsModelLoader
 import blocklearning.utilities as utilities
-import blocklearning.diffpriv as diffpriv
-from blocklearning.contract import RoundPhase
 import tensorflow as tf
+from blocklearning.contract import Contract
+from blocklearning.pedersen import Pedersen
+from blocklearning.trainers import PeerAggregatingTrainer
+from blocklearning.aggregators import MultiKrumAggregator
+from blocklearning.weights_loaders import IpfsWeightsLoader
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--ipfs', default='/ip4/127.0.0.1/tcp/5001', help='IPFS API provider')
 @click.option('--abi', default='./build/contracts/NoScore.json', help='contract abi file')
+@click.option('--pedersen_abi', default='../../build/contracts/PedersenContract.json', help='pedersen contract abi file')
 @click.option('--account', help='ethereum account to use for this computing server', required=True)
 @click.option('--passphrase', help='passphrase to unlock account', required=True)
 @click.option('--contract', help='contract address', required=True)
+@click.option('--pedersen_contract', required=True, help='pedersen contract address')
 @click.option('--log', help='logging file', required=True)
 @click.option('--train', help='training data .tfrecord file', required=True)
 @click.option('--test', help='training data .tfrecord file', required=True)
-@click.option('--scoring', default=None, help='scoring method')
-def main(provider, ipfs, abi, account, passphrase, contract, log, train, test, scoring):
+def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, pedersen_contract, log, train, test):
   log = utilities.setup_logger(log, "client")
 
   if ipfs == 'None':
     ipfs = None
 
-  weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)
+  weights_loader = IpfsWeightsLoader(ipfs)
   train_ds = tf.data.experimental.load(train)
 
-  # Get Contract and Register as Trainer
-  contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
+  contract = Contract(log, provider, abi, account, passphrase, contract)
+  pedersen_contract = Pedersen(log, provider, pedersen_abi, account, passphrase, pedersen_contract)
 
   # Load Model
-  model_loader = model_loaders.IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
+  model_loader = IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
   model = model_loader.load()
 
-  # Set Gaussian Differential Privacy
-  priv = None
-  # priv = diffpriv.Gaussian(epsilon=l5, sensitivity=1e-1/3)
-  # priv = diffpriv.Gaussian(epsilon=1, sensitivity=1e-1/2)
-  trainer = blocklearning.trainers.RegularTrainer(contract=contract, weights_loader=weights_loader, model=model, data=train_ds, logger=log, priv=priv)
-
-  # Setup the scorer for the clients. Only Marginal Gain and BlockFlow run on the client
-  # device and use the client's testing dataset as the validation dataset for the scores.
-  scorer = None
-  if scoring == 'marginal-gain':
-    scorer = scorers.MarginalGainScorer(log, contract, model, weights_loader, test)
-  elif scoring == 'blockflow':
-    scorer = scorers.AccuracyScorer(log, contract, model, weights_loader, test)
-  if scorer is not None:
-    scorer = blocklearning.Scorer(contract, scorer=scorer, logger=log)
+  trainer = PeerAggregatingTrainer(contract=contract, 
+                                   pedersen=pedersen_contract,
+                                   weights_loader=weights_loader, 
+                                   model=model, 
+                                   train_data=train_ds, 
+                                   test_data=None, 
+                                   aggregator=MultiKrumAggregator(weights_loader, 10), 
+                                   logger=log)
 
   while True:
     try:
-      phase = contract.get_round_phase()
-      if phase == RoundPhase.WAITING_FOR_UPDATES:
-        trainer.train()
-      elif phase == RoundPhase.WAITING_FOR_SCORES and scorer is not None:
-        scorer.score()
+      trainer.train()
     except web3.exceptions.ContractLogicError as err:
       print(err, flush=True)
     except requests.exceptions.ReadTimeout as err:

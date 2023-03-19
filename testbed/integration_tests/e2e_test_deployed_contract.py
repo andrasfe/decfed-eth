@@ -48,7 +48,7 @@ def get_account_by_role_by_index(data_dir, role, idx):
     account_password = accounts[role][account_address]
     return account_address, account_password
 
-def run_all_trainers(trainers):
+def run_all_trainers(trainers, round):
     for i in range(len(trainers)):
         try:
             trainers[i].train()
@@ -85,12 +85,7 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
             print('weights cid', cid)
 
     weights = weights_loader.load(cid)
-    model = SimpleMLP.build(image_lib) 
-
-    # model.set_weights(weights)
     aggregator = MultiKrumAggregator(weights_loader, 10)
-    basil_aggregator = BasilAggregator(weights_loader)
-    # priv = Gaussian()
 
     trainers = []
     local_contracts = []
@@ -99,23 +94,23 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
         local_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
         pedersen_contract = Pedersen(log, provider, pedersen_abi, account_address, account_password, pedersen_address)
         local_contracts.append(local_contract)
-        local_model = tf.keras.models.clone_model(model)
-        train_ds = tf.data.experimental.load(train_data_path.format(image_lib,i))
+        local_model = SimpleMLP.build(image_lib)
+        train_ds = tf.data.experimental.load(train_data_path.format(image_lib, i))
         test_ds = tf.data.experimental.load(test_data_path.format(image_lib, i))
-        # trainer = RegularTrainer(contract=local_contract, weights_loader=weights_loader, model=local_model, data=train_ds)
-        trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, model=local_model, 
-                                        train_data=train_ds, test_data=test_ds, aggregator=basil_aggregator, priv=None, logger=log)
+        trainer = PeerAggregatingTrainer(contract=local_contract, pedersen=pedersen_contract, weights_loader=weights_loader, 
+                                         model=local_model, train_data=train_ds, test_data=test_ds, 
+                                        aggregator=MultiKrumAggregator(IpfsWeightsLoader(ipfs_api=ipfs_api), 10), logger=log)
         trainers.append(trainer)
 
     aggregator_idx = len(trainers)
     account_address, account_password = get_account_by_role_by_index(data_dir, 'trainers', aggregator_idx)
     aggregator_contract = Contract(log, provider, abi, account_address, account_password, contract_address)
-    aggregator_model = tf.keras.models.clone_model(model)
-    train_ds = None # for now
+    aggregator_model =  SimpleMLP.build(image_lib) # tf.keras.models.clone_model(model)
+    train_ds = None
     test_ds = tf.data.experimental.load(owner_data_path.format(image_lib))
 
     server = Aggregator(contract=aggregator_contract, weights_loader=weights_loader, model=aggregator_model, 
-                                        train_ds=train_ds, test_ds=test_ds, aggregator=aggregator, with_scores=False, logger=log)
+                                        train_ds=train_ds, test_ds=test_ds, aggregator=aggregator, logger=log)
 
     all_trainers = contract.get_trainers()
     all_aggregators = contract.get_aggregators()
@@ -131,15 +126,15 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
-        run_all_trainers(trainers)
+        run_all_trainers(trainers, round)
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
-        run_all_trainers(trainers)
+        run_all_trainers(trainers, round)
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_UPDATES:
-        run_all_trainers(trainers)
+        run_all_trainers(trainers, round)
 
 
     phase = contract.get_round_phase()
@@ -162,14 +157,4 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
         print(subm_benchmark)
         log.info(subm_benchmark)
 
-    # cid = contract.get_weights_for_round(round)
-    # global_weights = weights_loader.load(cid)
-    # model.set_weights(global_weights)
-    # test_ds = tf.data.experimental.load(owner_data_path.format(image_lib))
-    # algo = RegularAlgo(model, 2, True)
-    # acc, loss = algo.test(test_ds)
-    # benchmarks='{},{},{}'.format(round, acc, loss)
-    # print(benchmarks)
-    # log.info(benchmarks)
-    
 main()

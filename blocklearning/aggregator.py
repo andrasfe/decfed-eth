@@ -3,9 +3,8 @@ import json
 from .training_algos import RegularAlgo
 
 class Aggregator():
-  def __init__(self, contract, weights_loader, model, train_ds, test_ds, aggregator, with_scores = False, logger = None):
+  def __init__(self, contract, weights_loader, model, train_ds, test_ds, aggregator, logger = None):
     self.logger = logger
-    self.with_scores = with_scores
     self.weights_loader = weights_loader
     self.contract = contract
     self.aggregator = aggregator
@@ -25,21 +24,8 @@ class Aggregator():
 
     self.__log_info(json.dumps({ 'event': 'start', 'submissions': submissions, 'round': round, 'ts': time.time_ns() }))
 
-    if self.with_scores:
-      (s_trainers, s_scorers, s_scores) = self.contract.get_scorings()
-      scorers = s_scorers
-      scores = s_scores
-
-      if trainers != s_trainers:
-        # If this ever happens, we must ensure that the order is the same for both.
-        raise 'trainers must be in the same order as s_trainers'
-
-    self.__log_info(json.dumps({ 'event': 'fedavg_start', 'round': round, 'ts': time.time_ns() }))
-
     new_weights = self.aggregator.aggregate(trainers, submissions)
 
-    # to be deleted
-    # new_weights = self.training_algo.get_weights()
 
     self.training_algo.set_weights(new_weights)
     acc, loss = self.training_algo.test(self.test_ds_batched)

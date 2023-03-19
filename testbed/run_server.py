@@ -3,12 +3,12 @@ import time
 import click
 import requests
 import blocklearning
-import blocklearning.scorers as scorers
-import blocklearning.aggregators as aggregators
+from blocklearning.aggregators import MultiKrumAggregator
 import blocklearning.model_loaders as model_loaders
 import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as utilities
 from blocklearning.contract import RoundPhase
+from blocklearning.aggregator import Aggregator
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
@@ -31,31 +31,19 @@ def main(provider, ipfs, abi, account, passphrase, contract, log, val, scoring):
   model_loader = model_loaders.IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
   model = model_loader.load()
 
-  aggregator = None
-  if scoring == 'marginal-gain':
-    aggregator = aggregators.FedAvgMeansAggregator(model.count, weights_loader)
-  elif scoring == 'multi-krum':
-    aggregator = aggregators.MultiKrumAggregator(model.count, weights_loader)
-  elif scoring == 'blockflow':
-    aggregator = aggregators.BlockFlowAggregator(model.count, weights_loader)
-  else:
-    aggregator = aggregators.FedAvgAggregator(model.count, weights_loader)
-
-  aggregator = blocklearning.Aggregator(contract, weights_loader, model, aggregator, with_scores=scoring!='none', logger=log)
-
-  scorer = None
-  if scoring == 'multi-krum':
-    scorer = scorers.MultiKrumScorer(weights_loader)
-  if scorer is not None:
-    scorer = blocklearning.Scorer(contract, scorer=scorer, logger=log)
+  server = Aggregator(contract=contract, 
+                      weights_loader=weights_loader, 
+                      model=model, 
+                      train_ds=None, 
+                      test_ds=None, 
+                      aggregator=MultiKrumAggregator(weights_loader, 10), 
+                      logger=log)
 
   while True:
     try:
       phase = contract.get_round_phase()
       if phase == RoundPhase.WAITING_FOR_AGGREGATIONS:
-        aggregator.aggregate()
-      elif phase == RoundPhase.WAITING_FOR_SCORES and scorer is not None:
-        scorer.score()
+        server.aggregate()
     except web3.exceptions.ContractLogicError as err:
       print(err, flush=True)
     except requests.exceptions.ReadTimeout as err:
