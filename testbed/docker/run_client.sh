@@ -14,12 +14,14 @@ nohup bash -c "ipfs daemon &" && sleep 15
 python run_client.py \
   --provider "http://$PROVIDER:8545" \
   --abi /root/abi.json \
+  --pedersen_abi /root/ZKP/pedersen_abi.json \
   --ipfs $IPFS_API \
   --account $ACCOUNT \
   --passphrase $PASSWORD \
   --contract $CONTRACT \
+  --pedersen_contract $PEDERSEN_CONTRACT \
   --log /root/log.log \
   --train /root/dataset/train/$((INDEX-1)).tfrecord \
   --test /root/dataset/test/$((INDEX-1)).tfrecord \
-  --scoring $SCORING
+
 

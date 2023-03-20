@@ -15,8 +15,8 @@ from blocklearning.weights_loaders import IpfsWeightsLoader
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
 @click.option('--ipfs', default='/ip4/127.0.0.1/tcp/5001', help='IPFS API provider')
-@click.option('--abi', default='./build/contracts/NoScore.json', help='contract abi file')
-@click.option('--pedersen_abi', default='../../build/contracts/PedersenContract.json', help='pedersen contract abi file')
+@click.option('--abi', default='./build/contracts/Different.json', help='contract abi file')
+@click.option('--pedersen_abi', default='../../build/contracts/ZKP/PedersenContract.json', help='pedersen contract abi file')
 @click.option('--account', help='ethereum account to use for this computing server', required=True)
 @click.option('--passphrase', help='passphrase to unlock account', required=True)
 @click.option('--contract', help='contract address', required=True)
@@ -32,6 +32,7 @@ def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, peder
 
   weights_loader = IpfsWeightsLoader(ipfs)
   train_ds = tf.data.experimental.load(train)
+  test_ds = tf.data.experimental.load(test)
 
   contract = Contract(log, provider, abi, account, passphrase, contract)
   pedersen_contract = Pedersen(log, provider, pedersen_abi, account, passphrase, pedersen_contract)
@@ -45,7 +46,7 @@ def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, peder
                                    weights_loader=weights_loader, 
                                    model=model, 
                                    train_data=train_ds, 
-                                   test_data=None, 
+                                   test_data=test_ds, 
                                    aggregator=MultiKrumAggregator(weights_loader, 10), 
                                    logger=log)
 

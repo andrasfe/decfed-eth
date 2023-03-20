@@ -11,14 +11,13 @@ services:
       # - IPFS_API=/dns/host.docker.internal/tcp/5001
       - IPFS_API=None
       - CONTRACT=$CONTRACT
-      - SCORING=$SCORING
       - MINERS=$MINERS
       - DATASET=$DATASET
     volumes:
       # Use the following volume for a public validation dataset:
       - './datasets/$DATASET/5:/root/dataset'
       # - './datasets/$DATASET/$SERVERS:/root/dataset'
-      - ../build/contracts/$ABI.json:/root/abi.json
+      - ../build/contracts/Different.json:/root/abi.json
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
@@ -32,12 +31,13 @@ services:
       # - IPFS_API=/dns/host.docker.internal/tcp/5001
       - IPFS_API=None
       - CONTRACT=$CONTRACT
-      - SCORING=$SCORING
+      - PEDERSEN_CONTRACT=$PEDERSEN_CONTRACT
       - MINERS=$MINERS
       - DATASET=$DATASET
     volumes:
       - './datasets/$DATASET/$CLIENTS:/root/dataset'
       - ../build/contracts/$ABI.json:/root/abi.json
+      - ../../build/contracts/ZKP/PedersenContract.json:/root/ZKP/pedersen_abi.json
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
