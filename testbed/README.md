@@ -141,8 +141,8 @@ Run `python3 model_persister.py` to generate the model and weights in `testbed/d
 ### Launch ML Containers
 
 ```bash
-CONTRACT=0x5b5218BF9C552FfA4C19306749bD4A4ebE54fB11 \
-PEDERSEN_CONTRACT=0x0cb6aF0cd04b41028f580DA38b24b842DDD2D8dE \
+CONTRACT=0x41880B93713A0037357FF16C97F80b7561ada1af \
+PEDERSEN_CONTRACT=0x2B8d5C0B445aF5C0059766512bd33E71f0073af0 \
 DATASET=mnist MINERS=5 SERVERS=1 CLIENTS=10 \
 docker-compose -f ml.yml -p bfl-ml up
 ```
@@ -167,7 +167,7 @@ done
 ```bash
 python3 start_round.py \
   --contract 0x2B8d5C0B445aF5C0059766512bd33E71f0073af0 \
-  --abi ../build/contracts/NoScore.json \
+  --abi ../build/contracts/Different.json \
   --rounds 50
 ```
 
