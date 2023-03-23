@@ -1,6 +1,5 @@
 
 import tensorflow as tf
-from tensorflow_privacy.privacy.analysis import compute_dp_sgd_privacy
 from tensorflow_privacy import DPKerasSGDOptimizer
 from .base_algo import BaseAlgo
 from sklearn.metrics import accuracy_score

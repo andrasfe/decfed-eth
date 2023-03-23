@@ -24,6 +24,7 @@ services:
   client:
     hostname: client
     image: bfl-node
+    # entrypoint: ["tail", "-f", "/dev/null"]
     entrypoint: /root/run_client.sh
     deploy:
       replicas: $CLIENTS
@@ -36,8 +37,8 @@ services:
       - DATASET=$DATASET
     volumes:
       - './datasets/$DATASET/$CLIENTS:/root/dataset'
-      - ../build/contracts/$ABI.json:/root/abi.json
-      - ../../build/contracts/ZKP/PedersenContract.json:/root/ZKP/pedersen_abi.json
+      - '../build/contracts/Different.json:/root/abi.json'
+      - '../build/contracts/PedersenContract.json:/root/ZKP/pedersen_abi.json'
     extra_hosts:
     - "host.docker.internal:host-gateway"
 

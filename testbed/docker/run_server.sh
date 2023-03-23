@@ -18,8 +18,7 @@ python run_server.py \
   --account $ACCOUNT \
   --passphrase $PASSWORD \
   --contract $CONTRACT \
-  --log /root/log.log \
-  --val /root/dataset/owner_val.tfrecord 
+  --log /root/log.log
 
 # Use the following flag for a private dataset
 # --val /root/dataset/test/$((INDEX-1)).npz 
