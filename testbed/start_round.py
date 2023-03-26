@@ -14,6 +14,7 @@ import blocklearning.model_loaders as model_loaders
 import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as butilities
 import tensorflow as tf
+from blocklearning.contract import RoundPhase
 
 # Setup Log
 log_file = '../../blocklearning-results/results/CURRENT/logs/manager.log'
@@ -36,15 +37,12 @@ def get_owner_account(data_dir):
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
-@click.option('--abi', default='../build/contracts/NoScore.json', help='contract abi file')
+@click.option('--abi', default='../build/contracts/Different.json', help='contract abi file')
 @click.option('--contract', required=True, help='contract address')
-@click.option('--scoring', default='none', help='scoring method')
-@click.option('--trainers', default='all', help='clients selection method')
 @click.option('--data-dir', default=utilities.default_datadir, help='ethereum data directory path')
-@click.option('--val', default='./datasets/mnist/5/owner_val.tfrecord', help='validation data .tfrecord file')
 @click.option('--rounds', default=1, type=click.INT, help='number of rounds')
 @click.option('--ipfs_api', default='none', help='whether to use API or not')
-def main(provider, abi, contract, scoring, trainers,  data_dir, val, rounds, ipfs_api):
+def main(provider, abi, contract, data_dir,rounds, ipfs_api):
   account_address, account_password = get_owner_account(data_dir)
   contract = blocklearning.Contract(log, provider, abi, account_address, account_password, contract)
 
@@ -54,60 +52,18 @@ def main(provider, abi, contract, scoring, trainers,  data_dir, val, rounds, ipf
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs_api=ipfs_api)
   model_loader = model_loaders.IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs_api)
   model = model_loader.load()
-  # x_val, y_val = butilities.numpy_load(val)
-  train_ds = tf.data.experimental.load(val)
+ 
+  all_trainers = contract.get_trainers()
+  all_aggregators = contract.get_aggregators()
 
-  def choose_participants():
-    all_trainers = contract.get_trainers()
-    all_aggregators = contract.get_aggregators()
+  phase = contract.get_round_phase()
+  round = contract.get_round()
 
-    round_trainers = None
-    round_aggregators = all_aggregators
-    round_scorers = None
+  if phase == RoundPhase.STOPPED:
+      contract.start_round(all_trainers, all_aggregators, 15000)
+      round = contract.get_round()
+      log.info('starting round {}'.format(round))
 
-    if trainers == 'random':
-      n = random.randint(len(all_trainers) // 2, len(all_trainers))
-      round_trainers = random.sample(all_trainers, n)
-    elif trainers == 'fcfs':
-      round_trainers = random.randint(len(all_trainers) // 2, len(all_trainers))
-    elif trainers == 'all':
-      round_trainers = all_trainers
-
-    if scoring == 'multi-krum':
-      round_scorers = round_aggregators
-    elif scoring == 'blockflow' or scoring == 'marginal-gain':
-      round_scorers = round_trainers
-
-    return round_trainers, round_aggregators, round_scorers
-
-  def eval_model(weights):
-    log.info(json.dumps({ 'event': 'eval_start', 'ts': time.time_ns(), 'round': round }))
-    model.set_weights(weights_loader.load(weights))
-    metrics = model.evaluate(x_val, y_val)
-    accuracy = metrics['sparse_categorical_accuracy']
-    log.info(json.dumps({ 'event': 'eval_end', 'ts': time.time_ns(), 'round': round }))
-    return accuracy
-
-  for i in range(0, rounds):
-    round_trainers, round_aggregators, round_scorers = choose_participants()
-    log.info(json.dumps({ 'event': 'start', 'trainers': round_trainers, 'aggregators': round_aggregators, 'scorers': round_scorers, 'ts': time.time_ns() }))
-
-    if trainers == 'fcfs':
-      contract.start_round(round_trainers, round_aggregators)
-    elif scoring != 'none':
-      contract.start_round(round_trainers, round_aggregators, round_scorers)
-    else:
-      contract.start_round(round_trainers, round_aggregators)
-
-    round = contract.get_round()
-
-    while contract.get_round_phase() != blocklearning.RoundPhase.WAITING_FOR_TERMINATION:
-      time.sleep(0.25)
-
-    contract.terminate_round()
-    weights = contract.get_weights(round)
-    accuracy = eval_model(weights)
-
-    log.info(json.dumps({ 'event': 'end', 'ts': time.time_ns(), 'round': round, 'weights': weights, 'accuracy': butilities.float_to_int(accuracy) }))
+  log.info(json.dumps({ 'event': 'end', 'ts': time.time_ns(), 'round': round, 'weights': weights, 'accuracy': butilities.float_to_int(accuracy) }))
 
 main()

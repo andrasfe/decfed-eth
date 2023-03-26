@@ -8,8 +8,8 @@ services:
     deploy:
       replicas: $SERVERS
     environment:
-      # - IPFS_API=/dns/host.docker.internal/tcp/5001
-      - IPFS_API=None
+      - IPFS_API=/dns/host.docker.internal/tcp/5001
+      # - IPFS_API=None
       - CONTRACT=$CONTRACT
       - MINERS=$MINERS
       - DATASET=$DATASET
@@ -29,8 +29,8 @@ services:
     deploy:
       replicas: $CLIENTS
     environment:
-      # - IPFS_API=/dns/host.docker.internal/tcp/5001
-      - IPFS_API=None
+      - IPFS_API=/dns/host.docker.internal/tcp/5001
+      # - IPFS_API=None
       - CONTRACT=$CONTRACT
       - PEDERSEN_CONTRACT=$PEDERSEN_CONTRACT
       - MINERS=$MINERS

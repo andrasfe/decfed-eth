@@ -3,6 +3,7 @@ import time
 import click
 import requests
 from blocklearning.model_loaders import IpfsModelLoader
+from blocklearning.models.simple_model import SimpleMLP
 import blocklearning.utilities as utilities
 import tensorflow as tf
 from blocklearning.contract import Contract
@@ -11,7 +12,7 @@ from blocklearning.trainers import PeerAggregatingTrainer
 from blocklearning.aggregators import MultiKrumAggregator
 from blocklearning.weights_loaders import IpfsWeightsLoader
 
-print('tesorflow version', tf.__version__)
+print('tensorflow version', tf.__version__)
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
@@ -40,7 +41,13 @@ def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, peder
 
   # Load Model
   model_loader = IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
-  model = model_loader.load()
+
+  model = None
+
+  try:
+    model = model_loader.load()
+  except:
+    model = SimpleMLP.build("mnist")
 
   trainer = PeerAggregatingTrainer(contract=contract, 
                                    pedersen=pedersen_contract,

@@ -12,9 +12,26 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            // "args": ["--contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0", "--abi", "../build/contracts/NoScore.json", "--rounds", "50"]
-            "args": ["--contract_address", "0x41880B93713A0037357FF16C97F80b7561ada1af", "--pedersen_address", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0"]
+
+            // start_round.py
+            // "args": ["--contract", "0x41880B93713A0037357FF16C97F80b7561ada1af", "--abi", "../build/contracts/Different.json", "--rounds", "50"]
+            // e2e integration
+            // "args": ["--contract_address", "0x41880B93713A0037357FF16C97F80b7561ada1af", "--pedersen_address", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0"]
             // "args": ["--pedersen_address", "0x9836930772454ca72e872A61b450e5CbD3c263E3"]
+
+            // start_client.py
+            "args": [
+            "--contract", "0x41880B93713A0037357FF16C97F80b7561ada1af", 
+            "--pedersen_contract", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0",
+            "--abi", "../build/contracts/Different.json", 
+            "--pedersen_abi", "../build/contracts/PedersenContract.json",
+            "--account", "0x543383902951E755E3924CC77cED2EC1E5BdC75F",
+            "--passphrase", "rT6LEffpCJKll8GGgMuXYtbzHXlTZ0fu",
+
+            "--log", "log.log",
+            "--train", "./datasets/mnist/10/train/0.tfrecord/",
+            "--test", "./datasets/mnist/10/test/0.tfrecord/"
+            ]
         }
     ]
 }
