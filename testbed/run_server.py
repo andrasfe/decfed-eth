@@ -5,6 +5,8 @@ import requests
 import blocklearning
 from blocklearning.aggregators import MultiKrumAggregator
 import blocklearning.model_loaders as model_loaders
+from blocklearning.model_loaders.ipfs import IpfsModelLoader
+from blocklearning.models.simple_model import SimpleMLP
 import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as utilities
 from blocklearning.contract import RoundPhase
@@ -26,8 +28,16 @@ def main(provider, ipfs, abi, account, passphrase, contract, log):
   log = utilities.setup_logger(log, "server")
   contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)
-  model_loader = model_loaders.IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
-  model = model_loader.load()
+
+  # Load Model
+  model_loader = IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
+
+  model = None
+
+  try:
+    model = model_loader.load()
+  except:
+    model = SimpleMLP.build("mnist")
 
   server = Aggregator(contract=contract, 
                       weights_loader=weights_loader, 
