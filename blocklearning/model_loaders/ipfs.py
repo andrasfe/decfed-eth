@@ -8,7 +8,6 @@ class IpfsModelLoader():
     self.weights_loader = weights_loader
     self.ipfs_api = ipfs_api
     self.direct = (ipfs_api == None)
-    pass
 
   def __load(self, model_cid, weights_cid = ""):
     with tempfile.TemporaryDirectory() as tempdir:
