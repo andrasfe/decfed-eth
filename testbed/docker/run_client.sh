@@ -11,7 +11,19 @@ if [ "$PRVINDEX" -eq "0" ]; then
 fi
 
 PROVIDER=$(dig bfl_geth-miner_$PRVINDEX +short)
-nohup bash -c "ipfs daemon &" && sleep 15
+
+if [ ! -e ${HOME}/.ipfs/api ]
+then 
+    ipfs daemon &
+else
+   echo "IPFS already started"
+fi
+while [ ! -e ${HOME}/.ipfs/api ]
+do 
+   echo "Waiting for IPFS to start";
+   sleep 1
+done
+
 python run_client.py \
   --provider "http://$PROVIDER:8545" \
   --abi /root/abi.json \

@@ -42,12 +42,14 @@ def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, peder
   # Load Model
   model_loader = IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
 
-  model = None
+  # model = None
 
-  try:
-    model = model_loader.load()
-  except:
-    model = SimpleMLP.build("mnist")
+  # try:
+  #   model = model_loader.load()
+  # except:
+  #   model = SimpleMLP.build("mnist")
+
+  model = SimpleMLP.build("mnist")
 
   trainer = PeerAggregatingTrainer(contract=contract, 
                                    pedersen=pedersen_contract,
