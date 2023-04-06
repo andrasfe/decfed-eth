@@ -29,7 +29,7 @@ class IpfsWeightsLoader():
         pickle.dump(weights, fp)
 
       if self.direct:
-        out = os.popen(f'ipfs add -q {weights_path}').read().strip().split('\n').pop()
+        out = os.popen(f'ipfs add {weights_path}').read().strip().split('\n').pop()
       else:
         out = os.popen(f'ipfs add --api {self.ipfs_api} -q {weights_path}').read().strip().split('\n').pop()
 
@@ -37,7 +37,7 @@ class IpfsWeightsLoader():
 
   def store_from_path(self, weights_path):
       if self.direct:
-        out = os.popen(f'ipfs add -q {weights_path}').read().strip().split('\n').pop()
+        out = os.popen(f'ipfs add {weights_path}').read().strip().split('\n').pop()
       else:
         out = os.popen(f'ipfs add --api {self.ipfs_api} -q {weights_path}').read().strip().split('\n').pop()
 

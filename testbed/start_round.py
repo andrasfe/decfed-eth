@@ -56,6 +56,8 @@ def main(provider, abi, contract, data_dir,rounds, ipfs_api):
   all_trainers = contract.get_trainers()
   all_aggregators = contract.get_aggregators()
 
+  log.info('trainers: {} aggregators: {}'.format(all_trainers, all_aggregators))
+
   phase = contract.get_round_phase()
   round = contract.get_round()
 
