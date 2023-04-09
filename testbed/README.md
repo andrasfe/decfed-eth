@@ -114,7 +114,7 @@ Where `CONSENSUS` = `poa|qbft|pow`.
 Unfortunately, peer discovery [doesn't work with private networks](https://ethereum.stackexchange.com/questions/121380/private-network-nodes-cant-find-peers). Not even if we use a bootstrap node. Thus, we need to connect the peers to each other manually.
 
 ```bash
-python3 toolkit.py connect-peers bflnet
+python3 toolkit.py connect-peers `docker network ls | awk '$2 == "bflnet" {print $1}'`
 ```
 
 Where `<network>` is the ID of the Docker network where the containers are running. You can check that by running `docker network ls` and looking for `bflnet` or `priv-eth-net`. If no network is passed, the script will try to infer the correct network.

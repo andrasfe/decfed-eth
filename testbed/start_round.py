@@ -68,4 +68,5 @@ def main(provider, abi, contract, data_dir,rounds, ipfs_api):
 
   # log.info(json.dumps({ 'event': 'end', 'ts': time.time_ns(), 'round': round, 'accuracy': butilities.float_to_int(accuracy) }))
 
+
 main()

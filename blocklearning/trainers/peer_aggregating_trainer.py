@@ -56,8 +56,8 @@ class PeerAggregatingTrainer(BaseTrainer):
 
   def train(self):
     (round, weights_id) = self.contract.get_training_round()
-
     phase = self.contract.get_round_phase()
+    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'phase': phase.name, 'ts': time.time_ns() }))
         
     if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
       self.__load_weights_by_id(weights_id)
@@ -85,7 +85,7 @@ class PeerAggregatingTrainer(BaseTrainer):
       validationAccuracy = float_to_int(acc*100)
 
       top_trainers = ModelSelector(self.weights_loader).closestToLocal(self.training_algo.get_weights(), trainers, submissions)
-      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
+      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'phase': phase.name, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
 
 
       weights = self.training_algo.get_weights()
@@ -101,5 +101,5 @@ class PeerAggregatingTrainer(BaseTrainer):
       }
       self.contract.submit_submission(submission)
 
-      self._log_info(json.dumps({ 'event': 'end', 'round': round, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
+      self._log_info(json.dumps({ 'event': 'end', 'round': round, 'phase': phase.name, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 

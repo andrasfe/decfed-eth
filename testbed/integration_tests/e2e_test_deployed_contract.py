@@ -78,13 +78,13 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
 
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
 
-    if cid == '':
-        with open(weights_path.format(image_lib), 'rb') as fp:
-            weights = pickle.load(fp)
-            cid = weights_loader.store(weights)
-            print('weights cid', cid)
+    # if cid == '':
+    #     with open(weights_path.format(image_lib), 'rb') as fp:
+    #         weights = pickle.load(fp)
+    #         cid = weights_loader.store(weights)
+    #         print('weights cid', cid)
 
-    weights = weights_loader.load(cid)
+    # weights = weights_loader.load(cid)
     aggregator = MultiKrumAggregator(weights_loader, 10)
 
     trainers = []
@@ -139,12 +139,14 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_AGGREGATIONS:
+        run_all_trainers(trainers, round)
         server.aggregate()
         log.info('terminated round {}'.format(round))
 
 
     phase = contract.get_round_phase()
     if phase == RoundPhase.WAITING_FOR_TERMINATION:
+        run_all_trainers(trainers, round)
         contract.terminate_round()
         log.info('terminated round {}'.format(round))
 

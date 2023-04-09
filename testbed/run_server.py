@@ -29,16 +29,6 @@ def main(provider, ipfs, abi, account, passphrase, contract, log):
   contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
   weights_loader = weights_loaders.IpfsWeightsLoader(ipfs)
 
-  # Load Model
-  model_loader = IpfsModelLoader(contract, weights_loader, ipfs_api=ipfs)
-
-  # model = None
-
-  # try:
-  #   model = model_loader.load()
-  # except:
-  #   model = SimpleMLP.build("mnist")
-
   model = SimpleMLP.build("mnist")
   server = Aggregator(contract=contract, 
                       weights_loader=weights_loader, 

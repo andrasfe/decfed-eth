@@ -68,6 +68,6 @@ def main(provider, ipfs, abi, pedersen_abi, account, passphrase, contract, peder
     except requests.exceptions.ReadTimeout as err:
       print(err, flush=True)
 
-    time.sleep(0.5)
+    time.sleep(5)
 
 main()
