@@ -20,6 +20,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.__hiddenWeights = ''
     self.__random_T = 0
     self.commitment = None
+    self.last_action_completed = None
     super().__init__()
 
   def __load_weights_by_id(self, weights_id):
@@ -29,6 +30,9 @@ class PeerAggregatingTrainer(BaseTrainer):
 
 
   def __do_first_update(self):
+    if self.last_action_completed == RoundPhase.WAITING_FOR_FIRST_UPDATE:
+      return
+
     history = self.training_algo.fit(self.train_ds_batched, freeze_except_last=False)
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
@@ -49,22 +53,19 @@ class PeerAggregatingTrainer(BaseTrainer):
     }
 
     self.contract.submit_first_update(submission)    
+    self.last_action_completed = RoundPhase.WAITING_FOR_FIRST_UPDATE
 
   def __do_proof_presentment(self):
+    if self.last_action_completed == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
+      return
+    
     self.contract.validate_pedersen(self.__random_T, self.__hiddenWeights)
+    self.last_action_completed = RoundPhase.WAITING_FOR_PROOF_PRESENTMENT
 
-
-  def train(self):
-    (round, weights_id) = self.contract.get_training_round()
-    phase = self.contract.get_round_phase()
-    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'phase': phase.name, 'ts': time.time_ns() }))
-        
-    if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
-      self.__load_weights_by_id(weights_id)
-      self.__do_first_update()
-    elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
-      self.__do_proof_presentment()
-    elif phase == RoundPhase.WAITING_FOR_UPDATES:
+  def __do_updates(self):
+      if self.last_action_completed == RoundPhase.WAITING_FOR_UPDATES:
+        return
+      
       self.__load_weights_by_id(weights_id)
 
       acc, loss = self.training_algo.test(self.test_ds_batched)
@@ -100,6 +101,24 @@ class PeerAggregatingTrainer(BaseTrainer):
         'secondCommit': 0
       }
       self.contract.submit_submission(submission)
+      self.last_action_completed = RoundPhase.WAITING_FOR_UPDATES
 
       self._log_info(json.dumps({ 'event': 'end', 'round': round, 'phase': phase.name, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 
+
+
+  def train(self):
+    if not self.contract.is_selected_trainer():
+      return
+
+    (round, weights_id) = self.contract.get_training_round()
+    phase = self.contract.get_round_phase()
+    self._log_info(json.dumps({ 'event': 'start', 'round': round, 'phase': phase.name, 'ts': time.time_ns() }))
+        
+    if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
+      self.__load_weights_by_id(weights_id)
+      self.__do_first_update()
+    elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
+      self.__do_proof_presentment()
+    elif phase == RoundPhase.WAITING_FOR_UPDATES:
+      self.__do_updates()

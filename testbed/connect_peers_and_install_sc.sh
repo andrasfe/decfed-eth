@@ -10,3 +10,6 @@ do
     sleep 30
   fi
 done
+
+output=$(python3 toolkit.py deploy-contract)
+

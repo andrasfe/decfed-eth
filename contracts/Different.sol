@@ -159,7 +159,7 @@ contract Different {
         return isInAddressArray(selectedAggregators[round], msg.sender);
     }
 
-    function isSelectedTrainer() internal view returns (bool) {
+    function isSelectedTrainer() public view returns (bool) {
         return isInAddressArray(selectedTrainers[round], msg.sender);
     }
 

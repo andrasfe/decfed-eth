@@ -40,6 +40,10 @@ class Contract(BaseContract):
   def get_aggregators(self):
     return self.contract.functions.getAggregators().call(self.default_opts)
 
+  def is_selected_trainer(self):
+    return self.contract.functions.isSelectedTrainer().call(self.default_opts)
+
+
   def get_scorers(self):
     return self.contract.functions.getScorers().call(self.default_opts)
 
