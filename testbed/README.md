@@ -141,8 +141,8 @@ Run `python3 model_persister.py` to generate the model and weights in `testbed/d
 ### Launch ML Containers
 
 ```bash
-CONTRACT=0x4f573172495774dE73C479E51a1b284DBDcc70F5 \
-PEDERSEN_CONTRACT=0x6A0cd93F1373951D625bDDB89090Eb369dF6CFA0 \
+CONTRACT=0x374764cf90e1fE9bF2CDbae40cd52Ec34Dd99bf6 \
+PEDERSEN_CONTRACT=0x95d72961D213db75D37480c7016FfF84cF30b42D \
 DATASET=mnist MINERS=5 SERVERS=1 CLIENTS=10 \
 docker-compose -f ml.yml -p bfl-ml up
 ```
@@ -166,7 +166,7 @@ done
 
 ```bash
 python3 start_round.py \
-  --contract 0x4f573172495774dE73C479E51a1b284DBDcc70F5 \
+  --contract 0x374764cf90e1fE9bF2CDbae40cd52Ec34Dd99bf6 \
   --abi ../build/contracts/Different.json \
   --rounds 50
 ```
@@ -207,56 +207,6 @@ ipfs add [-r] path
 ```
 example: `ipfs add ./datasets/model.h5` and `ipfs add ./datasets/weights.h5`.
 
-## How to Run Different Experiments
-
-### Consensus Algorithms
-
-```bash
-CONSENSUS=poa|pow|qbft MINERS=10 docker compose -f blockchain.yml -p bfl up
-
-CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-  DATASET=mnist MINERS=3 SERVERS=1 CLIENTS=5 \
-  SCORING="none" ABI=NoScore \
-  docker compose -f ml.yml -p bfl-ml up
-
-python3 start_round.py \
-  --contract 0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-  --abi ../build/contracts/NoScore.json \
-  --rounds 50
-```
-
-### Selection Mechanisms
-
-```bash
-CONSENSUS=poa MINERS=10 docker compose -f blockchain.yml -p bfl up
-
-CONTRACT=0xA63052D2C43CD996731937AAD7986bF8f88C2511 \
-  DATASET=mnist MINERS=10 SERVERS=10 CLIENTS=25 \
-  SCORING="none" ABI=FirstComeFirstServed \
-  docker compose -f ml.yml -p bfl-ml up
-
-python3 start_round.py \
-  --contract 0xA63052D2C43CD996731937AAD7986bF8f88C2511 \
-  --trainers fcfs \
-  --abi ../build/contracts/FirstComeFirstServed.json \
-  --rounds 50
-```
-
-### Without Score Mechanisms
-
-```bash
-CONSENSUS=poa MINERS=10 docker compose -f blockchain.yml -p bfl up
-
-CONTRACT=0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-  DATASET=mnist MINERS=10 SERVERS=10 CLIENTS=5|10|25|50 \
-  SCORING="none" ABI=NoScore \
-  docker compose -f ml.yml -p bfl-ml up
-
-python3 start_round.py \
-  --contract 0x8C3CBC8C31e5171C19d8a26af55E0db284Ae9b4B \
-  --abi ../build/contracts/NoScore.json \
-  --rounds 50
-```
 
 ## Debugging
 

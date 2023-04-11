@@ -62,7 +62,7 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.contract.validate_pedersen(self.__random_T, self.__hiddenWeights)
     self.last_action_completed = RoundPhase.WAITING_FOR_PROOF_PRESENTMENT
 
-  def __do_updates(self):
+  def __do_updates(self, round, weights_id):
       if self.last_action_completed == RoundPhase.WAITING_FOR_UPDATES:
         return
       
@@ -121,4 +121,4 @@ class PeerAggregatingTrainer(BaseTrainer):
     elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
       self.__do_proof_presentment()
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
-      self.__do_updates()
+      self.__do_updates(round, weights_id)

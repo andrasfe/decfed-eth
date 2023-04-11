@@ -62,9 +62,11 @@ def main(provider, abi, contract, data_dir,rounds, ipfs_api):
   round = contract.get_round()
 
   if phase == RoundPhase.STOPPED:
-      contract.start_round(all_trainers, all_aggregators, 15000)
-      round = contract.get_round()
-      log.info('starting round {}'.format(round))
+    contract.start_round(all_trainers, all_aggregators, 15000)
+    round = contract.get_round()
+    log.info('starting round {}'.format(round))
+  elif phase == RoundPhase.WAITING_FOR_TERMINATION:
+    contract.terminate_round()
 
   # log.info(json.dumps({ 'event': 'end', 'ts': time.time_ns(), 'round': round, 'accuracy': butilities.float_to_int(accuracy) }))
 

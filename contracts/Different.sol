@@ -110,6 +110,9 @@ contract Different {
         maxDurationPerCycle = timeDelta;
         selectedTrainers[round] = roundTrainers;
         selectedAggregators[round] = roundAggregators;
+
+        // roundPhase = RoundPhase.WaitingForFirstUpdate;
+
         if(round == 1) {
             roundPhase = RoundPhase.WaitingForFirstUpdate;
         }
