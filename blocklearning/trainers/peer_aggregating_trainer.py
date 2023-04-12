@@ -29,10 +29,7 @@ class PeerAggregatingTrainer(BaseTrainer):
       self.training_algo.set_weights(weights, freeze_except_last=False)
 
 
-  def __do_first_update(self):
-    if self.last_action_completed == RoundPhase.WAITING_FOR_FIRST_UPDATE:
-      return
-
+  def __do_first_update(self, phase):
     history = self.training_algo.fit(self.train_ds_batched, freeze_except_last=False)
     acc, loss = self.training_algo.test(self.test_ds_batched)
     trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
@@ -55,70 +52,63 @@ class PeerAggregatingTrainer(BaseTrainer):
     self.contract.submit_first_update(submission)    
     self.last_action_completed = RoundPhase.WAITING_FOR_FIRST_UPDATE
 
-  def __do_proof_presentment(self):
-    if self.last_action_completed == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
-      return
-    
+  def __do_proof_presentment(self, phase):
     self.contract.validate_pedersen(self.__random_T, self.__hiddenWeights)
     self.last_action_completed = RoundPhase.WAITING_FOR_PROOF_PRESENTMENT
 
-  def __do_updates(self, round, weights_id):
-      if self.last_action_completed == RoundPhase.WAITING_FOR_UPDATES:
-        return
-      
-      self.__load_weights_by_id(weights_id)
+  def __do_updates(self, round, phase, weights_id):
+    self.__load_weights_by_id(weights_id)
 
-      acc, loss = self.training_algo.test(self.test_ds_batched)
-      (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
+    acc, loss = self.training_algo.test(self.test_ds_batched)
+    (_, trainers, submissions) = self.contract.get_submissions_for_round(round - 1)
 
-      my_index = trainers.index(self.contract.account)
-      submissions.pop(my_index)  
-      trainers.pop(my_index)   
+    my_index = trainers.index(self.contract.account)
+    submissions.pop(my_index)  
+    trainers.pop(my_index)   
 
-      honest_trainers, dishonest_trainers, _ = self.aggregator.assess_trainers(trainers, submissions)
+    honest_trainers, dishonest_trainers, _ = self.aggregator.assess_trainers(trainers, submissions)
 
-      history = self.training_algo.fit(self.train_ds_batched)
+    history = self.training_algo.fit(self.train_ds_batched)
 
-      acc, loss = self.training_algo.test(self.test_ds_batched)
-      # self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
+    acc, loss = self.training_algo.test(self.test_ds_batched)
+    # self._log_info(json.dumps({ 'event': 'self_agg_post', 'round': round,'ts': time.time_ns(), 'pre_acc': pre_acc, 'acc': acc, 'pre_loss': pre_loss, 'loss': loss }))
 
-      trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
-      validationAccuracy = float_to_int(acc*100)
+    trainingAccuracy = float_to_int(history.history["accuracy"][-1]*100)
+    validationAccuracy = float_to_int(acc*100)
 
-      top_trainers = ModelSelector(self.weights_loader).closestToLocal(self.training_algo.get_weights(), trainers, submissions)
-      self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'phase': phase.name, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
+    top_trainers = ModelSelector(self.weights_loader).closestToLocal(self.training_algo.get_weights(), trainers, submissions)
+    self._log_info(json.dumps({ 'event': 'self_agg_start', 'round': round, 'phase': phase.name, 'ts': time.time_ns(), 'top_trainers': top_trainers }))
 
 
-      weights = self.training_algo.get_weights()
-      weights_id = self.weights_loader.store(weights)
+    weights = self.training_algo.get_weights()
+    weights_id = self.weights_loader.store(weights)
 
-      submission = {
-        'trainingAccuracy': trainingAccuracy,
-        'testingAccuracy': validationAccuracy,
-        'trainingDataPoints': 100,
-        'weights': weights_id,
-        'firstCommit': 0,
-        'secondCommit': 0
-      }
-      self.contract.submit_submission(submission)
-      self.last_action_completed = RoundPhase.WAITING_FOR_UPDATES
+    submission = {
+      'trainingAccuracy': trainingAccuracy,
+      'testingAccuracy': validationAccuracy,
+      'trainingDataPoints': 100,
+      'weights': weights_id,
+      'firstCommit': 0,
+      'secondCommit': 0
+    }
+    self.contract.submit_submission(submission)
+    self.last_action_completed = RoundPhase.WAITING_FOR_UPDATES
 
-      self._log_info(json.dumps({ 'event': 'end', 'round': round, 'phase': phase.name, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
+    self._log_info(json.dumps({ 'event': 'end', 'round': round, 'phase': phase.name, 'weights': weights_id, 'ts': time.time_ns(), 'submission': submission }))
 
 
 
   def train(self):
-    if not self.contract.is_selected_trainer():
-      return
+    # if not self.contract.is_selected_trainer():
+    #   return
 
     (round, weights_id) = self.contract.get_training_round()
     phase = self.contract.get_round_phase()
     self._log_info(json.dumps({ 'event': 'start', 'round': round, 'phase': phase.name, 'ts': time.time_ns() }))
         
     if phase == RoundPhase.WAITING_FOR_FIRST_UPDATE:
-      self.__load_weights_by_id(weights_id)
-      self.__do_first_update()
+      self.__do_first_update(phase)
     elif phase == RoundPhase.WAITING_FOR_PROOF_PRESENTMENT:
-      self.__do_proof_presentment()
+      self.__do_proof_presentment(phase)
     elif phase == RoundPhase.WAITING_FOR_UPDATES:
-      self.__do_updates(round, weights_id)
+      self.__do_updates(round, phase, weights_id)

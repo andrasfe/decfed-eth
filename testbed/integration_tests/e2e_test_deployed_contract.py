@@ -77,14 +77,6 @@ def main(ipfs_api, cid, image_lib, weights_path, train_data_path, test_data_path
     contract = Contract(log, provider, abi, account_address, account_password, contract_address)
 
     weights_loader = IpfsWeightsLoader(ipfs_api=ipfs_api)
-
-    # if cid == '':
-    #     with open(weights_path.format(image_lib), 'rb') as fp:
-    #         weights = pickle.load(fp)
-    #         cid = weights_loader.store(weights)
-    #         print('weights cid', cid)
-
-    # weights = weights_loader.load(cid)
     aggregator = MultiKrumAggregator(weights_loader, 10)
 
     trainers = []
