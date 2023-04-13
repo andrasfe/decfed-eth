@@ -16,7 +16,7 @@
             // start_round.py
             // "args": ["--contract", "0x4f573172495774dE73C479E51a1b284DBDcc70F5", "--abi", "../build/contracts/Different.json", "--rounds", "50"]
             // e2e integration
-            "args": ["--contract_address", "0xa2151bb92C8A6e1A98921C55336A90A98f231570", "--pedersen_address", "0xf3970541e93d8A260bF9E1a9eE5203e97A4701D6"]
+            "args": ["--contract_address", "0xdd7388aDF2E7AB922c5962DB423683ff51d9a1eD", "--pedersen_address", "0x67df2C98709fE02Cd202AAaE0e34860394fCaE13"]
             // "args": ["--pedersen_address", "0x9836930772454ca72e872A61b450e5CbD3c263E3"]
 
             // start_client.py

@@ -220,7 +220,7 @@ contract Different {
             /*block.number - startBlock > maxDurationPerCycle  ||*/
             updatesCount[round] == selectedTrainers[round].length
         ) {
-            roundPhase = RoundPhase.WaitingForUpdates;
+            roundPhase = RoundPhase.WaitingForAggregations;
         }
     }
 
