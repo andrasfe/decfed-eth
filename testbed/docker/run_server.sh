@@ -17,10 +17,17 @@ then
 else
    echo "IPFS already started"
 fi
+
+seed=$(date +%s)
+sleep_time=$(( $seed % 721 + 180 ))
+
+# Sleep for the randomly generated amount of time
+sleep $sleep_time
+
 while [ ! -e ${HOME}/.ipfs/api ]
 do 
    echo "Waiting for IPFS to start";
-   sleep 1
+   sleep 300
 done
 
 python run_server.py \

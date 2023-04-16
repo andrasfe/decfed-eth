@@ -8,7 +8,7 @@ from blocklearning.aggregators import ModelSelector
 from random import randint
 
 class PeerAggregatingTrainer(BaseTrainer):
-  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, rounds=5):
+  def __init__(self, contract, pedersen, weights_loader, model, train_data, test_data, aggregator, logger = None, rounds=30):
     self.logger = logger
     self.weights_loader = weights_loader
     self.contract = contract

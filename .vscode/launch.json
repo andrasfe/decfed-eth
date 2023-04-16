@@ -13,10 +13,14 @@
             "console": "integratedTerminal",
             "justMyCode": true,
 
+            // run_server.py
+            "args": ["--contract", "0x41880B93713A0037357FF16C97F80b7561ada1af", "--provider", "http://172.16.240.5:8545", "--abi",
+                 "../build/contracts/Different.json", "--ipfs", "None","--account", "0x543383902951E755E3924CC77cED2EC1E5BdC75F", "--passphrase", "rT6LEffpCJKll8GGgMuXYtbzHXlTZ0fu",
+                 "--log", "./log.log"]
             // start_round.py
             // "args": ["--contract", "0x4f573172495774dE73C479E51a1b284DBDcc70F5", "--abi", "../build/contracts/Different.json", "--rounds", "50"]
             // e2e integration
-            "args": ["--contract_address", "0xdd7388aDF2E7AB922c5962DB423683ff51d9a1eD", "--pedersen_address", "0x67df2C98709fE02Cd202AAaE0e34860394fCaE13"]
+            // "args": ["--contract_address", "0x41880B93713A0037357FF16C97F80b7561ada1af", "--pedersen_address", "0x2B8d5C0B445aF5C0059766512bd33E71f0073af0"]
             // "args": ["--pedersen_address", "0x9836930772454ca72e872A61b450e5CbD3c263E3"]
 
             // start_client.py
