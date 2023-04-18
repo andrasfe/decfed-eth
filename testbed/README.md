@@ -224,3 +224,17 @@ docker exec -it bfl-ml_server_1 /bin/sh
 ipfs add ./dataset/model.h5
 ipfs add ./dataset/weights.pkl
 ```
+
+## IPFS instructions
+
+examples
+
+```sh
+ipfs daemon --local-only=bflnet
+ipfs swarm peers
+ipfs add run_server.py
+ipfs pin add QmSQ5yUfemrBMUR99K4QXRJrDXsnbegJ8cX4wTbaMW69Hv
+ipfs config Identity.PeerID
+ipfs dht findprovs QmSQ5yUfemrBMUR99K4QXRJrDXsnbegJ8cX4wTbaMW69Hv
+ipfs shutdown
+```
