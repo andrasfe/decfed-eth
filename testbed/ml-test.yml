@@ -9,6 +9,7 @@ services:
       replicas: 2
     environment:
       - DATASET=$DATASET
+      - IPFS_API=/dns/host.docker.internal/tcp/5001
     volumes:
       # Use the following volume for a public validation dataset:
       - './datasets/$DATASET/5:/root/dataset'

@@ -229,12 +229,12 @@ ipfs add ./dataset/weights.pkl
 
 examples
 
+on host MUST be started like this:
 ```sh
-ipfs daemon --local-only=bflnet
-ipfs swarm peers
-ipfs add run_server.py
-ipfs pin add QmSQ5yUfemrBMUR99K4QXRJrDXsnbegJ8cX4wTbaMW69Hv
-ipfs config Identity.PeerID
-ipfs dht findprovs QmSQ5yUfemrBMUR99K4QXRJrDXsnbegJ8cX4wTbaMW69Hv
-ipfs shutdown
+ipfs daemon --api /ip4/0.0.0.0/tcp/5001
+```
+
+```sh
+ipfs --api /dns/host.docker.internal/tcp/5001 add run_client.py
+ipfs --api /dns/host.docker.internal/tcp/5001 get QmSSNQsHciyNjwqrKi55GzRhxtQfDf7pvsjZ4oXnA6MgNx
 ```
