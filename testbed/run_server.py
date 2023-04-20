@@ -11,6 +11,7 @@ import blocklearning.weights_loaders as weights_loaders
 import blocklearning.utilities as utilities
 from blocklearning.contract import RoundPhase
 from blocklearning.aggregator import Aggregator
+import tensorflow as tf
 
 @click.command()
 @click.option('--provider', default='http://127.0.0.1:8545', help='web3 API HTTP provider')
@@ -20,10 +21,16 @@ from blocklearning.aggregator import Aggregator
 @click.option('--passphrase', help='passphrase to unlock account', required=True)
 @click.option('--contract', help='contract address', required=True)
 @click.option('--log', help='logging file', required=True)
-def main(provider, ipfs, abi, account, passphrase, contract, log):
+@click.option('--train', help='training data .tfrecord file', required=True)
+@click.option('--test', help='training data .tfrecord file', required=True)
+
+def main(provider, ipfs, abi, account, passphrase, contract, log, train, test):
 
   if ipfs == 'None':
     ipfs = None
+
+  train_ds = tf.data.experimental.load(train)
+  test_ds = tf.data.experimental.load(test)
 
   log = utilities.setup_logger(log, "server")
   contract = blocklearning.Contract(log, provider, abi, account, passphrase, contract)
@@ -33,8 +40,8 @@ def main(provider, ipfs, abi, account, passphrase, contract, log):
   server = Aggregator(contract=contract, 
                       weights_loader=weights_loader, 
                       model=model, 
-                      train_ds=None, 
-                      test_ds=None, 
+                      train_ds=train_ds, 
+                      test_ds=test_ds, 
                       aggregator=MultiKrumAggregator(weights_loader, 10), 
                       logger=log)
 

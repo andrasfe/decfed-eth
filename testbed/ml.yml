@@ -16,7 +16,7 @@ services:
       - DATASET=$DATASET
     volumes:
       # Use the following volume for a public validation dataset:
-      - './datasets/$DATASET/5:/root/dataset'
+      - './datasets/$DATASET/$CLIENTS:/root/dataset'
       # - './datasets/$DATASET/$SERVERS:/root/dataset'
       - ../build/contracts/Different.json:/root/abi.json
     extra_hosts:
