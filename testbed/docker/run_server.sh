@@ -19,7 +19,7 @@ else
 fi
 
 seed=$(date +%s)
-sleep_time=$(( $seed % 721 + 180 ))
+sleep_time=$(( $seed % 300 + 60 ))
 
 # Sleep for the randomly generated amount of time
 sleep $sleep_time

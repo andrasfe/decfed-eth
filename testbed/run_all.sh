@@ -23,14 +23,9 @@ PEDERSEN_CONTRACT=0x2B8d5C0B445aF5C0059766512bd33E71f0073af0 \
 DATASET=mnist MINERS=5 SERVERS=1 CLIENTS=10 \
 docker-compose -f ml.yml -p bfl-ml up &
 
+./stats.sh &
 
-sleep 1800
-
-python3 start_round.py \
-  --contract 0x41880B93713A0037357FF16C97F80b7561ada1af \
-  --abi ../build/contracts/Different.json \
-  --rounds 50
-
+./repeat_rounds.sh
   
 
 

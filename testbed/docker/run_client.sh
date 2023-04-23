@@ -20,7 +20,7 @@ else
 fi
 
 seed=$(date +%s)
-sleep_time=$(( $seed % 300 + 180 ))
+sleep_time=$(( $seed % 300 + 60))
 
 # Sleep for the randomly generated amount of time
 sleep $sleep_time
@@ -28,7 +28,7 @@ sleep $sleep_time
 while [ ! -e ${HOME}/.ipfs/api ]
 do 
    echo "Waiting for IPFS to start";
-   sleep 300
+   sleep 60
 done
 
 python run_client.py \
