@@ -36,6 +36,8 @@
             // "--train", "./datasets/mnist/10/train/0.tfrecord/",
             // "--test", "./datasets/mnist/10/test/0.tfrecord/"
             // ]
+            // unit tests
+            "args": []
         }
     ]
 }

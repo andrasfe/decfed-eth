@@ -124,11 +124,16 @@ MODEL = "gpt-3.5-turbo"
 # MODEL = "text-davinci-003"
 
 def davinci(array):
-    prompt = "You are ChatGPT, a large language model trained by OpenAI. This is a MNIST 28 by 28 representation of a number. What possible values could it represent? Return as python array, such as: [2,5,9].\n{}".format(array)
+    prompt = "What possible values could it represent? \n{}".format(array)
 
     completion = openai.ChatCompletion.create(
         model=MODEL, 
-        messages = [{"role": "system", "content" : prompt}]
+        messages = [
+         {"role": "system", "content": "You are an AI that evaluates the 28 by 28 matrix outputs what number the image represents and also what it can be confused with."},
+         {"role": "system", "content" : prompt},
+         # {"role": "assistant", "content": "This is a handwritten digit image from the MNIST dataset. To determine the value it represents, we can feed it into a machine learning model trained on the MNIST dataset. However, without doing so, we can make an educated guess based on the image."},
+         # {"role": "system", "content" : "Make an educated guess. Return nothing but a python array, such as: [2,5,9]."}
+       ]
     )
     out = completion.choices[0].message.content
     return ast.literal_eval(out)
@@ -136,7 +141,7 @@ def davinci(array):
 
 def main():
     openai.api_key = os.environ["OPENAI_API_KEY"]
-    out = davinci(eight)
+    out = davinci(three)
     print(out)
 
 
