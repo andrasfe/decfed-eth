@@ -44,12 +44,6 @@ services:
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
-  tensorflow:
-    image: tensorflow/tensorflow:latest-gpu
-    runtime: gpu
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-
 networks:
   default:
     external:

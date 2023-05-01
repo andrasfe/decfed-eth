@@ -13,6 +13,7 @@ docker network create \
 CONSENSUS=poa MINERS=10 docker-compose -f blockchain.yml -p bfl up &
 
 sleep 300
+ipfs daemon --api /ip4/0.0.0.0/tcp/5001 --offline &
 
 python3 toolkit.py connect-peers `docker network ls | awk '$2 == "bflnet" {print $1}'`
 
